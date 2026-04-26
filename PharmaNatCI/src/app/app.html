@@ -1,0 +1,38 @@
+
+<div class="fixed top-4 right-4 z-[9999] flex flex-col gap-2 w-full max-w-sm pointer-events-none">
+  @for (toast of toasts(); track toast.id) {
+    <div class="pointer-events-auto rounded-lg shadow-lg border p-4 flex items-start gap-3 transform transition-all duration-300 animate-in fade-in slide-in-from-right-8"
+         [class.bg-green-50]="toast.type === 'succes'"
+         [class.border-green-200]="toast.type === 'succes'"
+         [class.text-green-800]="toast.type === 'succes'"
+         [class.bg-red-50]="toast.type === 'erreur'"
+         [class.border-red-200]="toast.type === 'erreur'"
+         [class.text-red-800]="toast.type === 'erreur'"
+         [class.bg-blue-50]="toast.type === 'info'"
+         [class.border-blue-200]="toast.type === 'info'"
+         [class.text-blue-800]="toast.type === 'info'">
+      
+      <div class="mt-0.5">
+        @if (toast.type === 'succes') {
+          <mat-icon class="text-green-500">check_circle</mat-icon>
+        }
+        @if (toast.type === 'erreur') {
+          <mat-icon class="text-red-500">error</mat-icon>
+        }
+        @if (toast.type === 'info') {
+          <mat-icon class="text-blue-500">info</mat-icon>
+        }
+      </div>
+      
+      <div class="flex-1">
+        <p class="text-sm font-medium">{{ toast.message }}</p>
+      </div>
+      
+      <button (click)="fermerToast(toast.id)" class="text-gray-400 hover:text-gray-600 focus:outline-none flex-shrink-0">
+        <mat-icon style="font-size: 18px; width: 18px; height: 18px;">close</mat-icon>
+      </button>
+    </div>
+  }
+</div>
+
+<router-outlet />

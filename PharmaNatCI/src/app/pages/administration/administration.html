@@ -1,0 +1,909 @@
+<div class="max-w-7xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Administration</h1>
+      <p class="text-sm text-gray-500 mt-1">Gérez les utilisateurs, médicaments, catégories et établissements.</p>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <div class="flex border-b border-gray-200 overflow-x-auto">
+      <button 
+        (click)="ongletActif.set('utilisateurs')"
+        [class.border-primary-500]="ongletActif() === 'utilisateurs'"
+        [class.text-primary-600]="ongletActif() === 'utilisateurs'"
+        [class.border-transparent]="ongletActif() !== 'utilisateurs'"
+        [class.text-gray-500]="ongletActif() !== 'utilisateurs'"
+        class="px-6 py-4 text-sm font-medium border-b-2 hover:text-gray-700 transition-colors whitespace-nowrap">
+        Utilisateurs
+      </button>
+      <button 
+        (click)="ongletActif.set('medicaments')"
+        [class.border-primary-500]="ongletActif() === 'medicaments'"
+        [class.text-primary-600]="ongletActif() === 'medicaments'"
+        [class.border-transparent]="ongletActif() !== 'medicaments'"
+        [class.text-gray-500]="ongletActif() !== 'medicaments'"
+        class="px-6 py-4 text-sm font-medium border-b-2 hover:text-gray-700 transition-colors whitespace-nowrap">
+        Médicaments
+      </button>
+      <button 
+        (click)="ongletActif.set('categories')"
+        [class.border-primary-500]="ongletActif() === 'categories'"
+        [class.text-primary-600]="ongletActif() === 'categories'"
+        [class.border-transparent]="ongletActif() !== 'categories'"
+        [class.text-gray-500]="ongletActif() !== 'categories'"
+        class="px-6 py-4 text-sm font-medium border-b-2 hover:text-gray-700 transition-colors whitespace-nowrap">
+        Catégories
+      </button>
+      <button 
+        (click)="ongletActif.set('etablissements')"
+        [class.border-primary-500]="ongletActif() === 'etablissements'"
+        [class.text-primary-600]="ongletActif() === 'etablissements'"
+        [class.border-transparent]="ongletActif() !== 'etablissements'"
+        [class.text-gray-500]="ongletActif() !== 'etablissements'"
+        class="px-6 py-4 text-sm font-medium border-b-2 hover:text-gray-700 transition-colors whitespace-nowrap">
+        Établissements
+      </button>
+      <button 
+        (click)="ongletActif.set('regions')"
+        [class.border-primary-500]="ongletActif() === 'regions'"
+        [class.text-primary-600]="ongletActif() === 'regions'"
+        [class.border-transparent]="ongletActif() !== 'regions'"
+        [class.text-gray-500]="ongletActif() !== 'regions'"
+        class="px-6 py-4 text-sm font-medium border-b-2 hover:text-gray-700 transition-colors whitespace-nowrap">
+        Régions
+      </button>
+      <button 
+        (click)="ongletActif.set('saisons')"
+        [class.border-primary-500]="ongletActif() === 'saisons'"
+        [class.text-primary-600]="ongletActif() === 'saisons'"
+        [class.border-transparent]="ongletActif() !== 'saisons'"
+        [class.text-gray-500]="ongletActif() !== 'saisons'"
+        class="px-6 py-4 text-sm font-medium border-b-2 hover:text-gray-700 transition-colors whitespace-nowrap">
+        Saisons
+      </button>
+    </div>
+
+    <div class="p-6">
+      
+      <!-- Navigation Hiérarchique (Pyramide) -->
+      @if (ongletActif() === 'utilisateurs' || ongletActif() === 'etablissements') {
+        <div class="mb-6 bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-4">
+          <nav class="flex items-center text-sm text-gray-500 overflow-x-auto whitespace-nowrap">
+            <button (click)="allerAEtablissement(null)" 
+                    class="hover:text-primary-600 flex items-center">
+              <mat-icon class="text-sm mr-1">home</mat-icon> Racine
+            </button>
+            @for (etab of cheminNavigation(); track etab.id) {
+              <mat-icon class="text-xs mx-2">chevron_right</mat-icon>
+              <button (click)="allerAEtablissement(etab.id)" 
+                      [class.text-primary-600]="etab.id === etablissementActuelId()"
+                      [class.font-bold]="etab.id === etablissementActuelId()"
+                      class="hover:text-primary-600">
+                {{ etab.nom }}
+              </button>
+            }
+          </nav>
+
+          @if (sousEtablissements().length > 0) {
+            <div class="pt-3 border-t border-gray-200">
+              <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">
+                {{ etablissementActuel() ? (etablissementActuel()?.type === 'NATIONAL' ? 'Régions / Entrepôts' : 'Pharmacies / Sous-unités') : 'Établissements Nationaux' }}
+              </p>
+              <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
+                @for (sous of sousEtablissements(); track sous.id) {
+                  <button (click)="allerAEtablissement(sous.id)" 
+                          class="flex items-center gap-2 p-2 rounded-lg border border-gray-200 bg-white hover:border-primary-300 hover:bg-primary-50 transition-all text-left">
+                    <mat-icon class="text-xs text-gray-400">{{ sous.type === 'REGION' ? 'location_city' : 'local_pharmacy' }}</mat-icon>
+                    <span class="text-xs font-medium text-gray-700 truncate">{{ sous.nom }}</span>
+                  </button>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+      <!-- Barre d'actions commune -->
+      <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
+        <div class="relative w-full sm:max-w-md">
+          <mat-icon class="material-icons-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</mat-icon>
+          <input type="text" [(ngModel)]="termeRecherche" placeholder="Rechercher..." 
+                 class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all text-sm">
+        </div>
+        
+        <!-- Boutons d'ajout contextuels -->
+        @if (ongletActif() === 'utilisateurs' && serviceAuthentification.peutGererUtilisateurs()) {
+          <button (click)="ouvrirModalUtilisateur()" 
+                  [disabled]="estEnChargementModal()"
+                  [class.btn-loading]="estEnChargementModal()"
+                  class="w-full sm:w-auto px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors flex items-center justify-center gap-2">
+            <mat-icon class="text-sm">add</mat-icon> Ajouter un utilisateur
+          </button>
+        }
+        @if (ongletActif() === 'medicaments' && serviceAuthentification.peutGererMedicaments()) {
+          <button (click)="ouvrirModalMedicament()" 
+                  [disabled]="estEnChargementModal()"
+                  [class.btn-loading]="estEnChargementModal()"
+                  class="w-full sm:w-auto px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors flex items-center justify-center gap-2">
+            <mat-icon class="text-sm">add</mat-icon> Ajouter un médicament
+          </button>
+        }
+        @if (ongletActif() === 'categories' && serviceAuthentification.peutGererMedicaments()) {
+          <button (click)="ouvrirModalCategorie()" 
+                  [disabled]="estEnChargementModal()"
+                  [class.btn-loading]="estEnChargementModal()"
+                  class="w-full sm:w-auto px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors flex items-center justify-center gap-2">
+            <mat-icon class="text-sm">add</mat-icon> Ajouter une catégorie
+          </button>
+        }
+        @if (ongletActif() === 'etablissements' && serviceAuthentification.peutGererEtablissements()) {
+          <button (click)="ouvrirModalEtablissement()" 
+                  [disabled]="estEnChargementModal()"
+                  [class.btn-loading]="estEnChargementModal()"
+                  class="w-full sm:w-auto px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors flex items-center justify-center gap-2">
+            <mat-icon class="text-sm">add</mat-icon> Ajouter un établissement
+          </button>
+        }
+        @if (ongletActif() === 'regions' && serviceAuthentification.peutGererEtablissements()) {
+          <button (click)="ouvrirModalRegion()" 
+                  [disabled]="estEnChargementModal()"
+                  [class.btn-loading]="estEnChargementModal()"
+                  class="w-full sm:w-auto px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors flex items-center justify-center gap-2">
+            <mat-icon class="text-sm">add</mat-icon> Ajouter une région
+          </button>
+        }
+        @if (ongletActif() === 'saisons' && serviceAuthentification.peutGererEtablissements()) {
+          <button (click)="ouvrirModalSaison()" 
+                  [disabled]="estEnChargementModal()"
+                  [class.btn-loading]="estEnChargementModal()"
+                  class="w-full sm:w-auto px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors flex items-center justify-center gap-2">
+            <mat-icon class="text-sm">add</mat-icon> Ajouter une saison
+          </button>
+        }
+      </div>
+
+      <!-- Utilisateurs -->
+      @if (ongletActif() === 'utilisateurs') {
+        <div class="space-y-4">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm min-w-[800px]">
+              <thead class="bg-gray-50 text-gray-500 font-medium border-b border-gray-200">
+                <tr>
+                  <th class="px-4 py-3">Photo</th>
+                  <th class="px-4 py-3">Nom</th>
+                  <th class="px-4 py-3">Email</th>
+                  <th class="px-4 py-3">Téléphone</th>
+                  <th class="px-4 py-3">Rôle</th>
+                  <th class="px-4 py-3">Établissement</th>
+                  <th class="px-4 py-3">Statut</th>
+                  @if (serviceAuthentification.peutGererUtilisateurs()) {
+                    <th class="px-4 py-3 text-right">Actions</th>
+                  }
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-200">
+                @for (u of utilisateursFiltres(); track u.id) {
+                  <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-3">
+                      @if (u.photo) {
+                        <img [src]="u.photo" alt="Photo de {{ u.nom }}" class="w-8 h-8 rounded-full object-cover" referrerpolicy="no-referrer">
+                      } @else {
+                        <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-xs font-bold">
+                          {{ u.nom?.substring(0,2)?.toUpperCase() }}
+                        </div>
+                      }
+                    </td>
+                    <td class="px-4 py-3 font-medium text-gray-900">
+                      {{ u.nom }}
+                      @if (u.fonction) {
+                        <div class="text-xs text-gray-500 font-normal">{{ u.fonction }}</div>
+                      }
+                    </td>
+                    <td class="px-4 py-3 text-gray-600">{{ u.email }}</td>
+                    <td class="px-4 py-3 text-gray-600">{{ u.telephone || '-' }}</td>
+                    <td class="px-4 py-3 text-gray-600 capitalize">{{ u.role.replace('_', ' ') }}</td>
+                    <td class="px-4 py-3 text-gray-600">{{ u.etablissementId ? u.etablissementId : 'N/A' }}</td>
+                    <td class="px-4 py-3">
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                        [ngClass]="u.actif ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
+                        {{ u.actif ? 'Actif' : 'Inactif' }}
+                      </span>
+                    </td>
+                    @if (serviceAuthentification.peutGererUtilisateurs()) {
+                      <td class="px-4 py-3 text-right">
+                        <button (click)="basculerStatutUtilisateur(u)" 
+                                [disabled]="estEnChargement()"
+                                [class.btn-loading]="estEnChargement()"
+                                class="text-gray-400 hover:text-gray-600 mx-1 disabled:opacity-50" [title]="u.actif ? 'Désactiver' : 'Activer'">
+                          <mat-icon class="text-[18px]">{{ u.actif ? 'block' : 'check_circle' }}</mat-icon>
+                        </button>
+                        <button (click)="ouvrirModalUtilisateur(u)" 
+                                [disabled]="estEnChargementModal()"
+                                [class.btn-loading]="estEnChargementModal()"
+                                class="text-blue-600 hover:text-blue-800 mx-1 disabled:opacity-50" title="Modifier">
+                          <mat-icon class="text-[18px]">edit</mat-icon>
+                        </button>
+                        <button (click)="supprimerUtilisateur(u.id)" 
+                                [disabled]="estEnChargement()"
+                                [class.btn-loading]="estEnChargement()"
+                                class="text-red-600 hover:text-red-800 mx-1 disabled:opacity-50" title="Supprimer">
+                          <mat-icon class="text-[18px]">delete</mat-icon>
+                        </button>
+                      </td>
+                    }
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+
+      <!-- Médicaments -->
+      @if (ongletActif() === 'medicaments') {
+        <div class="space-y-4">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm min-w-[800px]">
+              <thead class="bg-gray-50 text-gray-500 font-medium border-b border-gray-200">
+                <tr>
+                  <th class="px-4 py-3">Image</th>
+                  <th class="px-4 py-3">DCI</th>
+                  <th class="px-4 py-3">Nom Commercial</th>
+                  <th class="px-4 py-3">Forme & Dosage</th>
+                  <th class="px-4 py-3">Labo / Prix</th>
+                  <th class="px-4 py-3">Statut</th>
+                  @if (serviceAuthentification.peutGererUtilisateurs()) {
+                    <th class="px-4 py-3 text-right">Actions</th>
+                  }
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-200">
+                @for (m of medicamentsFiltres(); track m.id) {
+                  <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-3">
+                      @if (m.image) {
+                        <img [src]="m.image" alt="Image de {{ m.nomCommercial }}" class="w-10 h-10 rounded object-cover" referrerpolicy="no-referrer">
+                      } @else {
+                        <div class="w-10 h-10 rounded bg-gray-200 flex items-center justify-center text-gray-500">
+                          <mat-icon class="text-[20px]">medication</mat-icon>
+                        </div>
+                      }
+                    </td>
+                    <td class="px-4 py-3 font-medium text-gray-900">{{ m.dci }}</td>
+                    <td class="px-4 py-3 text-gray-600">{{ m.nomCommercial }}</td>
+                    <td class="px-4 py-3 text-gray-600">{{ m.forme }} {{ m.dosage }}</td>
+                    <td class="px-4 py-3 text-gray-600">
+                      <div class="text-xs">
+                        @if (m.laboratoire) { <div>{{ m.laboratoire }}</div> }
+                        @if (m.prixUnitaire) { <div class="font-medium text-gray-900">{{ m.prixUnitaire }} FCFA</div> }
+                      </div>
+                    </td>
+                    <td class="px-4 py-3">
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                        [ngClass]="m.actif !== false ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
+                        {{ m.actif !== false ? 'Actif' : 'Inactif' }}
+                      </span>
+                    </td>
+                    @if (serviceAuthentification.peutGererUtilisateurs()) {
+                      <td class="px-4 py-3 text-right">
+                        <button (click)="basculerStatutMedicament(m)" 
+                                [disabled]="estEnChargement()"
+                                [class.btn-loading]="estEnChargement()"
+                                class="text-gray-400 hover:text-gray-600 mx-1 disabled:opacity-50" [title]="m.actif !== false ? 'Désactiver' : 'Activer'">
+                          <mat-icon class="text-[18px]">{{ m.actif !== false ? 'block' : 'check_circle' }}</mat-icon>
+                        </button>
+                        <button (click)="ouvrirModalMedicament(m)" 
+                                [disabled]="estEnChargementModal()"
+                                [class.btn-loading]="estEnChargementModal()"
+                                class="text-blue-600 hover:text-blue-800 mx-1 disabled:opacity-50" title="Modifier">
+                          <mat-icon class="text-[18px]">edit</mat-icon>
+                        </button>
+                        <button (click)="supprimerMedicament(m.id)" 
+                                [disabled]="estEnChargement()"
+                                [class.btn-loading]="estEnChargement()"
+                                class="text-red-600 hover:text-red-800 mx-1 disabled:opacity-50" title="Supprimer">
+                          <mat-icon class="text-[18px]">delete</mat-icon>
+                        </button>
+                      </td>
+                    }
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+
+      <!-- Catégories -->
+      @if (ongletActif() === 'categories') {
+        <div class="space-y-4">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+              <thead class="bg-gray-50 text-gray-500 font-medium border-b border-gray-200">
+                <tr>
+                  <th class="px-4 py-3">ID</th>
+                  <th class="px-4 py-3">Nom</th>
+                  <th class="px-4 py-3">Statut</th>
+                  @if (serviceAuthentification.peutGererUtilisateurs()) {
+                    <th class="px-4 py-3 text-right">Actions</th>
+                  }
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-200">
+                @for (c of categoriesFiltres(); track c.id) {
+                  <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-3 font-medium text-gray-900">{{ c.id }}</td>
+                    <td class="px-4 py-3 text-gray-600">{{ c.nom }}</td>
+                    <td class="px-4 py-3">
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                        [ngClass]="c.actif !== false ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
+                        {{ c.actif !== false ? 'Actif' : 'Inactif' }}
+                      </span>
+                    </td>
+                    @if (serviceAuthentification.peutGererUtilisateurs()) {
+                      <td class="px-4 py-3 text-right">
+                        <button (click)="basculerStatutCategorie(c)" 
+                                [disabled]="estEnChargement()"
+                                [class.btn-loading]="estEnChargement()"
+                                class="text-gray-400 hover:text-gray-600 mx-1 disabled:opacity-50" [title]="c.actif !== false ? 'Désactiver' : 'Activer'">
+                          <mat-icon class="text-[18px]">{{ c.actif !== false ? 'block' : 'check_circle' }}</mat-icon>
+                        </button>
+                        <button (click)="ouvrirModalCategorie(c)" 
+                                [disabled]="estEnChargementModal()"
+                                [class.btn-loading]="estEnChargementModal()"
+                                class="text-blue-600 hover:text-blue-800 mx-1 disabled:opacity-50" title="Modifier">
+                          <mat-icon class="text-[18px]">edit</mat-icon>
+                        </button>
+                        <button (click)="supprimerCategorie(c.id)" 
+                                [disabled]="estEnChargement()"
+                                [class.btn-loading]="estEnChargement()"
+                                class="text-red-600 hover:text-red-800 mx-1 disabled:opacity-50" title="Supprimer">
+                          <mat-icon class="text-[18px]">delete</mat-icon>
+                        </button>
+                      </td>
+                    }
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+
+      <!-- Etablissements -->
+      @if (ongletActif() === 'etablissements') {
+        <div class="space-y-4">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm min-w-[800px]">
+              <thead class="bg-gray-50 text-gray-500 font-medium border-b border-gray-200">
+                <tr>
+                  <th class="px-4 py-3">Photo</th>
+                  <th class="px-4 py-3">Nom</th>
+                  <th class="px-4 py-3">Type</th>
+                  <th class="px-4 py-3">Parent / Région</th>
+                  <th class="px-4 py-3">Contact</th>
+                  <th class="px-4 py-3">Statut</th>
+                  @if (serviceAuthentification.peutGererUtilisateurs()) {
+                    <th class="px-4 py-3 text-right">Actions</th>
+                  }
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-200">
+                @for (e of etablissementsFiltres(); track e.id) {
+                  <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-3">
+                      @if (e.photo) {
+                        <img [src]="e.photo" alt="Photo de {{ e.nom }}" class="w-8 h-8 rounded-lg object-cover" referrerpolicy="no-referrer">
+                      } @else {
+                        <div class="w-8 h-8 rounded-lg bg-gray-200 flex items-center justify-center text-gray-500">
+                          <mat-icon class="text-[18px]">business</mat-icon>
+                        </div>
+                      }
+                    </td>
+                    <td class="px-4 py-3 font-medium text-gray-900">
+                      {{ e.nom }}
+                      @if (e.adresse) {
+                        <div class="text-xs text-gray-500 font-normal truncate max-w-[200px]">{{ e.adresse }}</div>
+                      }
+                    </td>
+                    <td class="px-4 py-3 text-gray-600">
+                      <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                        {{ e.type }}
+                      </span>
+                    </td>
+                    <td class="px-4 py-3 text-gray-600">{{ e.regionId || 'N/A' }}</td>
+                    <td class="px-4 py-3 text-gray-600">
+                      @if (e.telephone || e.email) {
+                        <div class="text-xs">
+                          @if (e.telephone) { <div>{{ e.telephone }}</div> }
+                          @if (e.email) { <div class="text-gray-400">{{ e.email }}</div> }
+                        </div>
+                      } @else {
+                        -
+                      }
+                    </td>
+                    <td class="px-4 py-3">
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                        [ngClass]="e.actif !== false ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
+                        {{ e.actif !== false ? 'Actif' : 'Inactif' }}
+                      </span>
+                    </td>
+                    @if (serviceAuthentification.peutGererUtilisateurs()) {
+                      <td class="px-4 py-3 text-right">
+                        <button (click)="basculerStatutEtablissement(e)" 
+                                [disabled]="estEnChargement()"
+                                [class.btn-loading]="estEnChargement()"
+                                class="text-gray-400 hover:text-gray-600 mx-1 disabled:opacity-50" [title]="e.actif !== false ? 'Désactiver' : 'Activer'">
+                          <mat-icon class="text-[18px]">{{ e.actif !== false ? 'block' : 'check_circle' }}</mat-icon>
+                        </button>
+                        <button (click)="ouvrirModalEtablissement(e)" 
+                                [disabled]="estEnChargementModal()"
+                                [class.btn-loading]="estEnChargementModal()"
+                                class="text-blue-600 hover:text-blue-800 mx-1 disabled:opacity-50" title="Modifier">
+                          <mat-icon class="text-[18px]">edit</mat-icon>
+                        </button>
+                        <button (click)="supprimerEtablissement(e.id)" 
+                                [disabled]="estEnChargement()"
+                                [class.btn-loading]="estEnChargement()"
+                                class="text-red-600 hover:text-red-800 mx-1 disabled:opacity-50" title="Supprimer">
+                          <mat-icon class="text-[18px]">delete</mat-icon>
+                        </button>
+                      </td>
+                    }
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+      <!-- Regions -->
+      @if (ongletActif() === 'regions') {
+        <div class="space-y-4">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm min-w-[800px]">
+              <thead class="bg-gray-50 text-gray-500 font-medium border-b border-gray-200">
+                <tr>
+                  <th class="px-4 py-3">ID</th>
+                  <th class="px-4 py-3">Nom</th>
+                  <th class="px-4 py-3">Code</th>
+                  @if (serviceAuthentification.peutGererUtilisateurs()) {
+                    <th class="px-4 py-3 text-right">Actions</th>
+                  }
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-200">
+                @for (r of regionsFiltres(); track r.id) {
+                  <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-3 font-medium text-gray-900">{{ r.id }}</td>
+                    <td class="px-4 py-3 text-gray-900">{{ r.nom }}</td>
+                    <td class="px-4 py-3 text-gray-600">{{ r.code || '-' }}</td>
+                    @if (serviceAuthentification.peutGererUtilisateurs()) {
+                      <td class="px-4 py-3 text-right">
+                        <button (click)="ouvrirModalRegion(r)" 
+                                [disabled]="estEnChargementModal()"
+                                [class.btn-loading]="estEnChargementModal()"
+                                class="text-blue-600 hover:text-blue-800 mx-1 disabled:opacity-50" title="Modifier">
+                          <mat-icon class="text-[18px]">edit</mat-icon>
+                        </button>
+                        <button (click)="supprimerRegion(r.id)" 
+                                [disabled]="estEnChargement()"
+                                [class.btn-loading]="estEnChargement()"
+                                class="text-red-600 hover:text-red-800 mx-1 disabled:opacity-50" title="Supprimer">
+                          <mat-icon class="text-[18px]">delete</mat-icon>
+                        </button>
+                      </td>
+                    }
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+
+      <!-- Saisons -->
+      @if (ongletActif() === 'saisons') {
+        <div class="space-y-4">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm min-w-[800px]">
+              <thead class="bg-gray-50 text-gray-500 font-medium border-b border-gray-200">
+                <tr>
+                  <th class="px-4 py-3">Nom</th>
+                  <th class="px-4 py-3">Mois</th>
+                  <th class="px-4 py-3">Région</th>
+                  <th class="px-4 py-3">Statut</th>
+                  @if (serviceAuthentification.peutGererEtablissements()) {
+                    <th class="px-4 py-3 text-right">Actions</th>
+                  }
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-200">
+                @for (s of saisonsFiltres(); track s.id) {
+                  <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-3 font-medium text-gray-900">{{ s.nom }}</td>
+                    <td class="px-4 py-3 text-gray-600">{{ s.mois.join(', ') }}</td>
+                    <td class="px-4 py-3 text-gray-600">{{ nomRegionDeSaison(s.regionId) }}</td>
+                    <td class="px-4 py-3">
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                        [ngClass]="s.actif ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
+                        {{ s.actif ? 'Active' : 'Inactive' }}
+                      </span>
+                    </td>
+                    @if (serviceAuthentification.peutGererEtablissements()) {
+                      <td class="px-4 py-3 text-right">
+                        <button (click)="ouvrirModalSaison(s)" 
+                                [disabled]="estEnChargementModal()"
+                                [class.btn-loading]="estEnChargementModal()"
+                                class="text-blue-600 hover:text-blue-800 mx-1 disabled:opacity-50" title="Modifier">
+                          <mat-icon class="text-[18px]">edit</mat-icon>
+                        </button>
+                        <button (click)="supprimerSaison(s.id)" 
+                                [disabled]="estEnChargement()"
+                                [class.btn-loading]="estEnChargement()"
+                                class="text-red-600 hover:text-red-800 mx-1 disabled:opacity-50" title="Supprimer">
+                          <mat-icon class="text-[18px]">delete</mat-icon>
+                        </button>
+                      </td>
+                    }
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</div>
+
+<!-- Modal Utilisateur -->
+@if (afficherModalUtilisateur()) {
+  <div class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+      <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+        <h3 class="text-lg font-bold text-gray-900">{{ utilisateurEdition().id ? 'Modifier' : 'Ajouter' }} Utilisateur</h3>
+        <button (click)="fermerModalUtilisateur()" class="text-gray-400 hover:text-gray-600"><mat-icon>close</mat-icon></button>
+      </div>
+      <form ngNativeValidate (submit)="$event.preventDefault(); sauvegarderUtilisateur()" class="p-6 space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label for="u_nom" class="block text-sm font-medium text-gray-700 mb-1">Nom / Prénoms</label>
+            <input id="u_nom" type="text" [(ngModel)]="utilisateurEdition().first_name" name="first_name" required class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 border p-2">
+          </div>
+          <div>
+            <label for="u_email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <input id="u_email" type="email" [(ngModel)]="utilisateurEdition().email" name="email" required class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 border p-2">
+          </div>
+        </div>
+        <div>
+          <label for="u_role" class="block text-sm font-medium text-gray-700 mb-1">Rôle</label>
+          <select id="u_role" [(ngModel)]="utilisateurEdition().role" name="role" required class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 border p-2">
+            @for (r of serviceDonnees.roles(); track r.code) {
+              <option [value]="r.code">{{ r.nom }}</option>
+            }
+          </select>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label for="u_telephone" class="block text-sm font-medium text-gray-700 mb-1">Téléphone</label>
+            <input id="u_telephone" type="tel" [(ngModel)]="utilisateurEdition().telephone" name="telephone" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 border p-2">
+          </div>
+          <div>
+            <label for="u_matricule" class="block text-sm font-medium text-gray-700 mb-1">Matricule (Identifiant de connexion)</label>
+            <input id="u_matricule" type="text" [(ngModel)]="utilisateurEdition().matricule" name="matricule" required class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 border p-2">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label for="u_fonction" class="block text-sm font-medium text-gray-700 mb-1">Fonction</label>
+            <input id="u_fonction" type="text" [(ngModel)]="utilisateurEdition().fonction" name="fonction" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 border p-2">
+          </div>
+          <div>
+            <label for="u_motDePasse" class="block text-sm font-medium text-gray-700 mb-1">Mot de passe</label>
+            <input id="u_motDePasse" type="password" [(ngModel)]="utilisateurEdition().password" name="password" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 border p-2" placeholder="Laisser vide pour ne pas modifier">
+          </div>
+        </div>
+        <div>
+          <label for="u_photo" class="block text-sm font-medium text-gray-700 mb-1">Photo</label>
+          <input id="u_photo" type="file" accept="image/*" (change)="onFileSelected($event, 'utilisateur')" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 border p-2">
+          @if (utilisateurEdition().photo) {
+            <div class="mt-2">
+              <img [src]="utilisateurEdition().photo" alt="Aperçu" class="h-16 w-16 object-cover rounded-full border border-gray-200">
+            </div>
+          }
+        </div>
+        @if (serviceAuthentification.estAdmin()) {
+          <div>
+            <label for="u_etab" class="block text-sm font-medium text-gray-700 mb-1">Établissement</label>
+            <select id="u_etab" [(ngModel)]="utilisateurEdition().etablissementId" name="etablissementId" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 border p-2">
+              <option [ngValue]="null">Aucun (Central)</option>
+              @for (e of serviceFiltrage.etablissementsFiltres(); track e.id) {
+                <option [value]="e.id">{{ e.nom }}</option>
+              }
+            </select>
+          </div>
+        }
+        <div class="flex justify-end gap-3 pt-4">
+          <button type="button" (click)="fermerModalUtilisateur()" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">Annuler</button>
+          <button type="submit" 
+                  [disabled]="estEnChargement()"
+                  [class.btn-loading]="estEnChargement()"
+                  class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- Modal Médicament -->
+@if (afficherModalMedicament()) {
+  <div class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+      <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+        <h3 class="text-lg font-bold text-gray-900">{{ medicamentEdition().id ? 'Modifier' : 'Ajouter' }} Médicament</h3>
+        <button (click)="fermerModalMedicament()" class="text-gray-400 hover:text-gray-600"><mat-icon>close</mat-icon></button>
+      </div>
+      <form ngNativeValidate (submit)="$event.preventDefault(); sauvegarderMedicament()" class="p-6 space-y-4">
+        <div>
+          <label for="m_dci" class="block text-sm font-medium text-gray-700 mb-1">DCI</label>
+          <input id="m_dci" type="text" [(ngModel)]="medicamentEdition().dci" name="dci" required class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 border p-2">
+        </div>
+        <div>
+          <label for="m_nom" class="block text-sm font-medium text-gray-700 mb-1">Nom Commercial</label>
+          <input id="m_nom" type="text" [(ngModel)]="medicamentEdition().nomCommercial" name="nomCommercial" required class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 border p-2">
+        </div>
+        <div class="grid grid-cols-3 gap-4">
+          <div>
+            <label for="m_forme" class="block text-sm font-medium text-gray-700 mb-1">Forme</label>
+            <input id="m_forme" type="text" [(ngModel)]="medicamentEdition().forme" name="forme" required class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 border p-2">
+          </div>
+          <div>
+            <label for="m_dosage" class="block text-sm font-medium text-gray-700 mb-1">Dosage</label>
+            <input id="m_dosage" type="text" [(ngModel)]="medicamentEdition().dosage" name="dosage" required class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 border p-2">
+          </div>
+          <div>
+            <label for="m_unite" class="block text-sm font-medium text-gray-700 mb-1">Unité</label>
+            <input id="m_unite" type="text" [(ngModel)]="medicamentEdition().unite" name="unite" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 border p-2">
+          </div>
+        </div>
+        <div>
+          <label for="m_cat" class="block text-sm font-medium text-gray-700 mb-1">Catégorie</label>
+          <select id="m_cat" [(ngModel)]="medicamentEdition().categorieId" name="categorieId" required class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 border p-2">
+            @for (c of serviceDonnees.categories(); track c.id) {
+              <option [value]="c.id">{{ c.nom }}</option>
+            }
+          </select>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label for="m_labo" class="block text-sm font-medium text-gray-700 mb-1">Laboratoire</label>
+            <input id="m_labo" type="text" [(ngModel)]="medicamentEdition().laboratoire" name="laboratoire" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 border p-2">
+          </div>
+          <div>
+            <label for="m_prix" class="block text-sm font-medium text-gray-700 mb-1">Prix Unitaire</label>
+            <input id="m_prix" type="number" step="0.01" [(ngModel)]="medicamentEdition().prixUnitaire" name="prixUnitaire" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 border p-2">
+          </div>
+        </div>
+        <div>
+          <label for="m_desc" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+          <textarea id="m_desc" [(ngModel)]="medicamentEdition().description" name="description" rows="2" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 border p-2"></textarea>
+        </div>
+        <div>
+          <label for="m_image" class="block text-sm font-medium text-gray-700 mb-1">Image</label>
+          <input id="m_image" type="file" accept="image/*" (change)="onFileSelected($event, 'medicament')" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 border p-2">
+          @if (medicamentEdition().image) {
+            <div class="mt-2">
+              <img [src]="medicamentEdition().image" alt="Aperçu" class="h-16 w-16 object-cover rounded border border-gray-200">
+            </div>
+          }
+        </div>
+        <div class="flex justify-end gap-3 pt-4">
+          <button type="button" (click)="fermerModalMedicament()" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">Annuler</button>
+          <button type="submit" 
+                  [disabled]="estEnChargement()"
+                  [class.btn-loading]="estEnChargement()"
+                  class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- Modal Catégorie -->
+@if (afficherModalCategorie()) {
+  <div class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+      <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+        <h3 class="text-lg font-bold text-gray-900">{{ categorieEdition().id ? 'Modifier' : 'Ajouter' }} Catégorie</h3>
+        <button (click)="fermerModalCategorie()" class="text-gray-400 hover:text-gray-600"><mat-icon>close</mat-icon></button>
+      </div>
+      <form ngNativeValidate (submit)="$event.preventDefault(); sauvegarderCategorie()" class="p-6 space-y-4">
+        <div>
+          <label for="c_nom" class="block text-sm font-medium text-gray-700 mb-1">Nom de la catégorie</label>
+          <input id="c_nom" type="text" [(ngModel)]="categorieEdition().nom" name="nom" required class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 border p-2">
+        </div>
+        <div class="flex justify-end gap-3 pt-4">
+          <button type="button" (click)="fermerModalCategorie()" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">Annuler</button>
+          <button type="submit" 
+                  [disabled]="estEnChargement()"
+                  [class.btn-loading]="estEnChargement()"
+                  class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- Modal Établissement -->
+@if (afficherModalEtablissement()) {
+  <div class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+      <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+        <h3 class="text-lg font-bold text-gray-900">{{ etablissementEdition().id ? 'Modifier' : 'Ajouter' }} Établissement</h3>
+        <button (click)="fermerModalEtablissement()" class="text-gray-400 hover:text-gray-600"><mat-icon>close</mat-icon></button>
+      </div>
+      <form ngNativeValidate (submit)="$event.preventDefault(); sauvegarderEtablissement()" class="p-6 space-y-4">
+        <div>
+          <label for="e_nom" class="block text-sm font-medium text-gray-700 mb-1">Nom</label>
+          <input id="e_nom" type="text" [(ngModel)]="etablissementEdition().nom" name="nom" required class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 border p-2">
+        </div>
+        <div>
+          <label for="e_type" class="block text-sm font-medium text-gray-700 mb-1">Type</label>
+          <select id="e_type" [(ngModel)]="etablissementEdition().type" name="type" required class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 border p-2">
+            <option value="NATIONAL">Entrepôt National</option>
+            <option value="REGION">Entrepôt Régional</option>
+            <option value="PHARMACIE">Pharmacie</option>
+          </select>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label for="e_regionId" class="block text-sm font-medium text-gray-700 mb-1">Région Géographique</label>
+            <select id="e_regionId" [(ngModel)]="etablissementEdition().regionId" name="regionId" [required]="etablissementEdition().type !== 'NATIONAL'" [disabled]="etablissementEdition().type === 'NATIONAL'" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 border p-2 disabled:bg-gray-100 disabled:text-gray-500">
+              <option [ngValue]="undefined" disabled>Sélectionner...</option>
+              @for (r of serviceDonnees.regions(); track r.id) {
+                <option [value]="r.id">{{ r.nom }}</option>
+              }
+            </select>
+          </div>
+          <div>
+            <label for="e_parentId" class="block text-sm font-medium text-gray-700 mb-1">Établissement Parent</label>
+            <select id="e_parentId" [(ngModel)]="etablissementEdition().parentId" name="parentId" [disabled]="etablissementEdition().type === 'NATIONAL'" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 border p-2 disabled:bg-gray-100 disabled:text-gray-500">
+              <option [ngValue]="undefined">Aucun</option>
+              @if (etablissementEdition().type === 'PHARMACIE') {
+                @for (e of serviceDonnees.etablissements(); track e.id) {
+                  @if (e.type === 'REGION') {
+                    <option [value]="e.id">{{ e.nom }}</option>
+                  }
+                }
+              }
+              @if (etablissementEdition().type === 'REGION') {
+                @for (e of serviceDonnees.etablissements(); track e.id) {
+                  @if (e.type === 'NATIONAL') {
+                    <option [value]="e.id">{{ e.nom }}</option>
+                  }
+                }
+              }
+            </select>
+            @if (etablissementEdition().type === 'NATIONAL') {
+              <p class="text-xs text-gray-500 mt-1">Un entrepôt national n'a pas de parent.</p>
+            } @else if (!etablissementEdition().type) {
+              <p class="text-xs text-gray-500 mt-1">Sélectionnez d'abord un type.</p>
+            }
+          </div>
+        </div>
+        <div>
+          <label for="e_adresse" class="block text-sm font-medium text-gray-700 mb-1">Adresse</label>
+          <input id="e_adresse" type="text" [(ngModel)]="etablissementEdition().adresse" name="adresse" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 border p-2">
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label for="e_telephone" class="block text-sm font-medium text-gray-700 mb-1">Téléphone</label>
+            <input id="e_telephone" type="tel" [(ngModel)]="etablissementEdition().telephone" name="telephone" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 border p-2">
+          </div>
+          <div>
+            <label for="e_email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <input id="e_email" type="email" [(ngModel)]="etablissementEdition().email" name="email" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 border p-2">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label for="e_lat" class="block text-sm font-medium text-gray-700 mb-1">Latitude</label>
+            <input id="e_lat" type="number" step="any" [(ngModel)]="etablissementEdition().latitude" name="latitude" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 border p-2">
+          </div>
+          <div>
+            <label for="e_lng" class="block text-sm font-medium text-gray-700 mb-1">Longitude</label>
+            <input id="e_lng" type="number" step="any" [(ngModel)]="etablissementEdition().longitude" name="longitude" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 border p-2">
+          </div>
+        </div>
+        <div>
+          <label for="e_photo" class="block text-sm font-medium text-gray-700 mb-1">Photo</label>
+          <input id="e_photo" type="file" accept="image/*" (change)="onFileSelected($event, 'etablissement')" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 border p-2">
+          @if (etablissementEdition().photo) {
+            <div class="mt-2">
+              <img [src]="etablissementEdition().photo" alt="Aperçu" class="h-16 w-16 object-cover rounded-lg border border-gray-200">
+            </div>
+          }
+        </div>
+        <div class="flex justify-end gap-3 pt-4">
+          <button type="button" (click)="fermerModalEtablissement()" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">Annuler</button>
+          <button type="submit" 
+                  [disabled]="estEnChargement()"
+                  [class.btn-loading]="estEnChargement()"
+                  class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- Modal Région -->
+@if (afficherModalRegion()) {
+  <div class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+      <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+        <h3 class="text-lg font-bold text-gray-900">{{ regionEdition().id ? 'Modifier' : 'Ajouter' }} Région</h3>
+        <button (click)="fermerModalRegion()" class="text-gray-400 hover:text-gray-600"><mat-icon>close</mat-icon></button>
+      </div>
+      <form ngNativeValidate (submit)="$event.preventDefault(); sauvegarderRegion()" class="p-6 space-y-4">
+        <div>
+          <label for="r_nom" class="block text-sm font-medium text-gray-700 mb-1">Nom de la région</label>
+          <input id="r_nom" type="text" [(ngModel)]="regionEdition().nom" name="nom" required class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 border p-2">
+        </div>
+        <div>
+          <label for="r_code" class="block text-sm font-medium text-gray-700 mb-1">Code / Identifiant</label>
+          <input id="r_code" type="text" [(ngModel)]="regionEdition().code" name="code" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 border p-2">
+        </div>
+        <div class="flex justify-end gap-3 pt-4">
+          <button type="button" (click)="fermerModalRegion()" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">Annuler</button>
+          <button type="submit" 
+                  [disabled]="estEnChargement()"
+                  [class.btn-loading]="estEnChargement()"
+                  class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- Modal Saison -->
+@if (afficherModalSaison()) {
+  <div class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+      <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+        <h3 class="text-lg font-bold text-gray-900">{{ saisonEdition().id ? 'Modifier' : 'Ajouter' }} Saison</h3>
+        <button (click)="fermerModalSaison()" class="text-gray-400 hover:text-gray-600"><mat-icon>close</mat-icon></button>
+      </div>
+      <form ngNativeValidate (submit)="$event.preventDefault(); sauvegarderSaison()" class="p-6 space-y-4">
+        <div>
+          <label for="s_nom" class="block text-sm font-medium text-gray-700 mb-1">Nom de la saison</label>
+          <input id="s_nom" type="text" [(ngModel)]="saisonEdition().nom" name="nom" required class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 border p-2">
+        </div>
+        <div>
+          <label for="s_region" class="block text-sm font-medium text-gray-700 mb-1">Région</label>
+          <select id="s_region" [(ngModel)]="saisonEdition().regionId" name="regionId" required class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 border p-2">
+            <option [ngValue]="undefined">Sélectionner une région...</option>
+            @for (r of serviceDonnees.regions(); track r.id) {
+              <option [value]="r.id">{{ r.nom }}</option>
+            }
+          </select>
+        </div>
+        <div>
+          <label for="s_mois" class="block text-sm font-medium text-gray-700 mb-1">Mois (séparés par une virgule, ex: 5,6,7)</label>
+          <input id="s_mois" type="text" [(ngModel)]="saisonMoisInput" name="moisInput" required class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 border p-2" placeholder="Ex: 1, 2, 12">
+        </div>
+        <div class="flex items-center gap-2">
+          <input id="s_actif" type="checkbox" [(ngModel)]="saisonEdition().actif" name="actif" class="rounded text-primary-600 focus:ring-primary-500">
+          <label for="s_actif" class="text-sm font-medium text-gray-700">Saison active</label>
+        </div>
+        <div class="flex justify-end gap-3 pt-4">
+          <button type="button" (click)="fermerModalSaison()" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">Annuler</button>
+          <button type="submit" 
+                  [disabled]="estEnChargement()"
+                  [class.btn-loading]="estEnChargement()"
+                  class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

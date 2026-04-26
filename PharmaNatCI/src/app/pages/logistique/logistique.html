@@ -1,0 +1,333 @@
+<div class="max-w-7xl mx-auto space-y-6 relative">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Logistique & Retours</h1>
+      <p class="text-sm text-gray-500 mt-1">Gestion des rappels et reverse logistics : {{ etablissementActuel()?.nom }}</p>
+    </div>
+    <div class="flex gap-2">
+      @if (serviceAuthentification.aPermission('creer_mouvement')) {
+        <button (click)="ouvrirModale('ENTREE')" 
+                [disabled]="chargementAction()"
+                [class.btn-loading]="chargementAction()"
+                class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors shadow-sm">
+          <mat-icon class="material-icons-outlined text-sm">add_circle</mat-icon>
+          Entrée Manuelle
+        </button>
+        <button (click)="ouvrirModale('SORTIE')" 
+                [disabled]="chargementAction()"
+                [class.btn-loading]="chargementAction()"
+                class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors shadow-sm">
+          <mat-icon class="material-icons-outlined text-sm">remove_circle</mat-icon>
+          Sortie Manuelle
+        </button>
+      }
+      @if (serviceAuthentification.aPermission('gerer_logistique')) {
+        <button (click)="initierRappel()" class="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-colors shadow-sm">
+          <mat-icon class="material-icons-outlined text-sm">campaign</mat-icon>
+          Initier un Rappel
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Statistiques & Navigation -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Navigation Hiérarchique -->
+    <div class="lg:col-span-2 bg-white p-4 rounded-xl border border-gray-200 shadow-sm space-y-4">
+      <nav class="flex items-center text-sm text-gray-500 overflow-x-auto whitespace-nowrap pb-2 sm:pb-0">
+        <button (click)="allerAEtablissement(serviceAuthentification.utilisateurActuel()?.etablissementId || null)" 
+                class="hover:text-primary-600 flex items-center">
+          <mat-icon class="text-sm mr-1">home</mat-icon> Racine
+        </button>
+        @for (etab of cheminNavigation(); track etab.id) {
+          <mat-icon class="text-xs mx-2">chevron_right</mat-icon>
+          <button (click)="allerAEtablissement(etab.id)" 
+                  [class.text-primary-600]="etab.id === etablissementActuelId()"
+                  [class.font-bold]="etab.id === etablissementActuelId()"
+                  class="hover:text-primary-600">
+            {{ etab.nom }}
+          </button>
+        }
+      </nav>
+
+      @if (sousEtablissements().length > 0) {
+        <div class="pt-2 border-t border-gray-100">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            @for (sous of sousEtablissements(); track sous.id) {
+              <button (click)="allerAEtablissement(sous.id)" 
+                      class="flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:border-primary-300 hover:bg-primary-50 transition-all text-left group">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded bg-gray-100 flex items-center justify-center text-gray-500 group-hover:bg-primary-100 group-hover:text-primary-600">
+                    <mat-icon class="text-sm">{{ sous.type === 'REGION' ? 'location_city' : 'local_pharmacy' }}</mat-icon>
+                  </div>
+                  <span class="text-sm font-medium text-gray-700 group-hover:text-primary-700">{{ sous.nom }}</span>
+                </div>
+                <mat-icon class="text-gray-300 group-hover:text-primary-400">chevron_right</mat-icon>
+              </button>
+            }
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- e-POD Simulation (Réduit) -->
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex flex-col justify-center items-center text-center">
+      <div class="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mb-3">
+        <mat-icon class="text-emerald-600">qr_code_scanner</mat-icon>
+      </div>
+      <h3 class="text-sm font-bold text-gray-900 mb-1">e-POD</h3>
+      <p class="text-[10px] text-gray-500 mb-4">Mise à jour auto des stocks par scan.</p>
+      @if (serviceAuthentification.aPermission('gerer_logistique')) {
+        <button (click)="simulerScan()" 
+          [disabled]="chargementAction()"
+          [class.btn-loading]="chargementAction()"
+          class="px-4 py-1.5 bg-gray-900 text-white rounded-lg text-xs font-medium hover:bg-gray-800 transition-all shadow-sm w-full">
+          Simuler Scan e-POD
+        </button>
+      }
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Mouvements Récents -->
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col">
+      <div class="p-5 border-b border-gray-200 flex items-center justify-between">
+        <h3 class="text-base font-semibold text-gray-900 flex items-center gap-2">
+          <mat-icon class="text-gray-500">sync_alt</mat-icon>
+          Mouvements Récents
+        </h3>
+        <a routerLink="/mouvements" class="text-xs text-primary-600 font-medium hover:underline">Voir tout</a>
+      </div>
+      <div class="p-0 overflow-x-auto">
+        <table class="w-full text-left text-sm">
+          <thead class="bg-gray-50 text-gray-500 font-medium">
+            <tr>
+              <th class="px-5 py-3">Médicament</th>
+              <th class="px-5 py-3 text-right">Quantité</th>
+              <th class="px-5 py-3">Type</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-200">
+            @for (mov of mouvementsRecents(); track mov.id) {
+              <tr class="hover:bg-gray-50">
+                <td class="px-5 py-3">
+                  <div class="flex flex-col">
+                    <span class="font-medium text-gray-900">{{ mov.nomMedicament }}</span>
+                    <span class="text-[10px] text-gray-400 font-mono">{{ mov.lot }}</span>
+                  </div>
+                </td>
+                <td class="px-5 py-3 text-right font-bold" [class.text-green-600]="mov.direction === 'entree'">
+                  {{ mov.direction === 'entree' ? '+' : '-' }}{{ mov.quantite }}
+                </td>
+                <td class="px-5 py-3">
+                  <span class="text-[10px] uppercase font-bold text-gray-400">{{ mov.type }}</span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Expéditions en Attente -->
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col">
+      <div class="p-5 border-b border-gray-200 flex items-center justify-between">
+        <h3 class="text-base font-semibold text-gray-900 flex items-center gap-2">
+          <mat-icon class="text-orange-500">pending_actions</mat-icon>
+          Expéditions en Attente
+        </h3>
+        <span class="px-2 py-0.5 bg-orange-100 text-orange-700 text-[10px] font-bold rounded-full">
+          {{ transfertsEnAttente().length }}
+        </span>
+      </div>
+      <div class="p-0 overflow-x-auto">
+        <table class="w-full text-left text-sm">
+          <thead class="bg-gray-50 text-gray-500 font-medium">
+            <tr>
+              <th class="px-5 py-3">Destination</th>
+              <th class="px-5 py-3">Produit</th>
+              <th class="px-5 py-3">Qté</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-200">
+            @for (t of transfertsEnAttente(); track t.id) {
+              <tr class="hover:bg-gray-50 cursor-pointer" routerLink="/transferts">
+                <td class="px-5 py-3 text-gray-900">{{ t.destination }}</td>
+                <td class="px-5 py-3 text-gray-600">{{ t.medicament }}</td>
+                <td class="px-5 py-3 font-bold text-gray-900">{{ t.quantite }}</td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="3" class="px-5 py-8 text-center text-gray-400 italic">
+                  Aucune expédition en attente
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Réceptions en Transit -->
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col">
+      <div class="p-5 border-b border-gray-200 flex items-center justify-between">
+        <h3 class="text-base font-semibold text-gray-900 flex items-center gap-2">
+          <mat-icon class="text-blue-500">local_shipping</mat-icon>
+          Réceptions en Transit
+        </h3>
+        <span class="px-2 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-bold rounded-full">
+          {{ transfertsEnTransit().length }}
+        </span>
+      </div>
+      <div class="p-0 overflow-x-auto">
+        <table class="w-full text-left text-sm">
+          <thead class="bg-gray-50 text-gray-500 font-medium">
+            <tr>
+              <th class="px-5 py-3">Origine</th>
+              <th class="px-5 py-3">Produit</th>
+              <th class="px-5 py-3">Statut</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-200">
+            @for (t of transfertsEnTransit(); track t.id) {
+              <tr class="hover:bg-gray-50 cursor-pointer" routerLink="/transferts">
+                <td class="px-5 py-3 text-gray-900">{{ t.origine }}</td>
+                <td class="px-5 py-3 text-gray-600">{{ t.medicament }}</td>
+                <td class="px-5 py-3">
+                  <span class="px-2 py-0.5 bg-blue-50 text-blue-600 text-[10px] font-bold rounded uppercase">
+                    {{ t.statut }}
+                  </span>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="3" class="px-5 py-8 text-center text-gray-400 italic">
+                  Aucune réception en attente
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Retours & Rappels -->
+  <div class="bg-white rounded-xl border border-gray-200 shadow-sm">
+    <div class="p-5 border-b border-gray-200">
+      <h3 class="text-base font-semibold text-gray-900 flex items-center gap-2">
+        <mat-icon class="text-gray-500">assignment_return</mat-icon>
+        Retours & Rappels de Lots
+      </h3>
+    </div>
+    <div class="p-0 overflow-x-auto">
+      <table class="w-full text-left text-sm">
+        <thead class="bg-gray-50 text-gray-500 font-medium">
+          <tr>
+            <th class="px-5 py-3">ID Retour</th>
+            <th class="px-5 py-3">Motif</th>
+            <th class="px-5 py-3">Statut</th>
+            <th class="px-5 py-3">Date</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200">
+          @for (ret of retoursFiltres(); track ret.id) {
+            <tr class="hover:bg-gray-50">
+              <td class="px-5 py-3 font-medium text-gray-900">{{ ret.id }}</td>
+              <td class="px-5 py-3">
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700 uppercase">
+                  {{ ret.motif }}
+                </span>
+              </td>
+              <td class="px-5 py-3">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase"
+                  [class.bg-amber-100]="ret.statut === 'En attente'" [class.text-amber-800]="ret.statut === 'En attente'"
+                  [class.bg-emerald-100]="ret.statut === 'Approuvé'" [class.text-emerald-800]="ret.statut === 'Approuvé'"
+                  [class.bg-red-100]="ret.statut === 'Rejeté'" [class.text-red-800]="ret.statut === 'Rejeté'">
+                  {{ ret.statut }}
+                </span>
+              </td>
+              <td class="px-5 py-3 text-gray-400 text-xs">{{ ret.dateRetour | date:'short' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modale d'ajustement -->
+  @if (afficherModaleAjustement()) {
+    <div class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in duration-300">
+        <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center"
+             [class.bg-emerald-50]="typeAjustement() === 'ENTREE'"
+             [class.bg-orange-50]="typeAjustement() === 'SORTIE'">
+          <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+            <mat-icon [class.text-emerald-600]="typeAjustement() === 'ENTREE'" [class.text-orange-600]="typeAjustement() === 'SORTIE'">
+              {{ typeAjustement() === 'ENTREE' ? 'add_circle' : 'remove_circle' }}
+            </mat-icon>
+            {{ typeAjustement() === 'ENTREE' ? 'Entrée de Stock' : 'Sortie de Stock' }}
+          </h3>
+          <button (click)="afficherModaleAjustement.set(false)" class="text-gray-400 hover:text-gray-600 transition-colors">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+        
+        <div class="p-6 space-y-4">
+          <div>
+            <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Médicament</label>
+            <select [ngModel]="nouveauMouvement.medicamentId" (ngModelChange)="onMedicamentChange($event)" class="w-full border-gray-200 rounded-lg p-2.5 text-sm focus:ring-primary-500 border outline-none">
+              @for (med of serviceDonnees.medicaments(); track med.id) {
+                <option [value]="med.id">{{ med.dci }} ({{ med.nomCommercial }})</option>
+              }
+            </select>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Lot / Stock</label>
+              
+              @if (typeAjustement() === 'ENTREE') {
+                <input [(ngModel)]="nouveauMouvement.numeroLot" list="lotsAjustement" class="w-full border-gray-200 rounded-lg p-2.5 text-sm focus:ring-primary-500 border outline-none font-mono" placeholder="Saisir ou choisir lot">
+                <datalist id="lotsAjustement">
+                  @for (lot of lotsFiltresAvecStock(); track lot.id) {
+                    <option [value]="lot.numeroLot">Stock: {{ lot.stockAcutel }}</option>
+                  }
+                </datalist>
+              } @else {
+                <select [(ngModel)]="nouveauMouvement.numeroLot" class="w-full border-gray-200 rounded-lg p-2.5 text-sm focus:ring-primary-500 border outline-none font-mono">
+                  <option value="">-- Choisir un lot --</option>
+                  @for (lot of lotsFiltresAvecStock(); track lot.id) {
+                    <option [value]="lot.numeroLot" [disabled]="lot.stockAcutel <= 0">
+                      {{ lot.numeroLot }} (Stock: {{ lot.stockAcutel }})
+                    </option>
+                  }
+                </select>
+              }
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Quantité</label>
+              <input type="number" [(ngModel)]="nouveauMouvement.quantite" min="1" class="w-full border-gray-200 rounded-lg p-2.5 text-sm focus:ring-primary-500 border outline-none font-bold">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Motif</label>
+            <textarea [(ngModel)]="nouveauMouvement.motif" rows="2" class="w-full border-gray-200 rounded-lg p-2.5 text-sm focus:ring-primary-500 border outline-none resize-none" placeholder="Ex: Réajustement après inventaire physique..."></textarea>
+          </div>
+
+          <div class="pt-4 flex gap-3">
+            <button (click)="afficherModaleAjustement.set(false)" [disabled]="chargementAction()" class="flex-1 px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">Annuler</button>
+            <button (click)="confirmerAjustement()" 
+                    [disabled]="chargementAction()"
+                    [class.btn-loading]="chargementAction()"
+                    [class.bg-emerald-600]="typeAjustement() === 'ENTREE'"
+                    [class.bg-orange-600]="typeAjustement() === 'SORTIE'"
+                    class="flex-1 px-4 py-2 text-white rounded-lg text-sm font-bold shadow-lg hover:opacity-90 transition-all">
+              Valider
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }

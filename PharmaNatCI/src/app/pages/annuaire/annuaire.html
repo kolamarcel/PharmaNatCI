@@ -1,0 +1,245 @@
+<div class="max-w-7xl mx-auto space-y-6 relative">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Référentiel National</h1>
+      <p class="text-sm text-gray-500 mt-1">Catalogue des médicaments et structures sanitaires</p>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <!-- Catalogue Médicaments -->
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
+      <div class="px-6 py-5 border-b border-gray-200 flex items-center gap-3">
+        <div class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
+          <mat-icon class="material-icons-outlined">medication</mat-icon>
+        </div>
+        <div>
+          <h2 class="text-lg font-bold text-gray-900">Catalogue Médicaments</h2>
+          <p class="text-sm text-gray-500">Synchronisé avec la PSP-CI</p>
+        </div>
+      </div>
+      <div class="p-6 flex-1">
+        <p class="text-sm text-gray-600 mb-4">
+          Base de données nationale contenant les DCI, formes, dosages, catégories ATC et équivalences thérapeutiques.
+        </p>
+        <ul class="space-y-3 text-sm text-gray-700">
+          <li class="flex items-center gap-2"><mat-icon class="text-green-500" style="font-size: 18px; width: 18px; height: 18px;">check_circle</mat-icon> {{ serviceFiltrage.stocksFiltres().length }} Médicaments référencés</li>
+          <li class="flex items-center gap-2"><mat-icon class="text-green-500" style="font-size: 18px; width: 18px; height: 18px;">check_circle</mat-icon> 24 Catégories thérapeutiques</li>
+          <li class="flex items-center gap-2"><mat-icon class="text-green-500" style="font-size: 18px; width: 18px; height: 18px;">check_circle</mat-icon> Gestion des seuils d'alerte nationaux</li>
+        </ul>
+      </div>
+      <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
+        <button (click)="ouvrirCatalogue()" class="w-full py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+          Parcourir le catalogue
+        </button>
+      </div>
+    </div>
+
+    <!-- Annuaire des Structures -->
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
+      <div class="px-6 py-5 border-b border-gray-200 flex items-center gap-3">
+        <div class="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
+          <mat-icon class="material-icons-outlined">domain</mat-icon>
+        </div>
+        <div>
+          <h2 class="text-lg font-bold text-gray-900">Structures Sanitaires</h2>
+          <p class="text-sm text-gray-500">Hiérarchie géographique</p>
+        </div>
+      </div>
+      <div class="p-6 flex-1">
+        <p class="text-sm text-gray-600 mb-4">
+          Cartographie des CHU, CHR, Hôpitaux Généraux et Centres de Santé (Urbains et Ruraux) de Côte d'Ivoire.
+        </p>
+        <ul class="space-y-3 text-sm text-gray-700">
+          <li class="flex items-center gap-2"><mat-icon class="text-green-500" style="font-size: 18px; width: 18px; height: 18px;">check_circle</mat-icon> 31 Régions Sanitaires</li>
+          <li class="flex items-center gap-2"><mat-icon class="text-green-500" style="font-size: 18px; width: 18px; height: 18px;">check_circle</mat-icon> 119 Districts de Santé</li>
+          <li class="flex items-center gap-2"><mat-icon class="text-green-500" style="font-size: 18px; width: 18px; height: 18px;">check_circle</mat-icon> ~2,100 Pharmacies publiques</li>
+        </ul>
+      </div>
+      <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
+        <button (click)="ouvrirStructures()" class="w-full py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+          Voir la carte des structures
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modale Catalogue -->
+  @if (afficherCatalogue()) {
+    <div class="fixed inset-0 bg-gray-900/50 z-50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-xl shadow-xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]">
+        <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+          <h3 class="text-lg font-bold text-gray-900">Catalogue des Médicaments</h3>
+          <button (click)="fermerCatalogue()" class="text-gray-400 hover:text-gray-600">
+            <mat-icon class="material-icons-outlined">close</mat-icon>
+          </button>
+        </div>
+        
+        <!-- Recherche et Filtres -->
+        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex flex-col sm:flex-row gap-4">
+          <div class="flex-1 relative">
+            <mat-icon class="material-icons-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</mat-icon>
+            <input type="text" [(ngModel)]="requeteRecherche" placeholder="Rechercher par DCI, nom commercial, code..." 
+                   class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all text-sm">
+          </div>
+          <div class="flex gap-2">
+            <select [(ngModel)]="categorieSelectionnee" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 outline-none bg-white">
+              <option value="">Toutes catégories</option>
+              <option value="Antipaludéen">Antipaludéens</option>
+              <option value="Antibiotique">Antibiotiques</option>
+              <option value="Analgésique">Analgésiques</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="p-6 overflow-y-auto flex-1">
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Médicament (DCI)</th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Forme & Dosage</th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Catégorie</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                @for (item of stocksPagines(); track item.id) {
+                  <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">#{{ item.id }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="flex items-center gap-3">
+                        @if (item.image) {
+                          <img [src]="item.image" [alt]="item.nom" class="w-10 h-10 rounded-lg object-cover border border-gray-200" referrerpolicy="no-referrer">
+                        } @else {
+                          <div class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 border border-gray-200">
+                            <mat-icon class="text-sm">medication</mat-icon>
+                          </div>
+                        }
+                        <span class="text-sm font-medium text-gray-900">{{ item.nom }}</span>
+                      </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <span class="text-sm text-gray-500">{{ item.forme }} • {{ item.dosage }}</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                        {{ item.categorie }}
+                      </span>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="px-6 py-3 border-t border-gray-200 bg-gray-50 flex items-center justify-between">
+          <span class="text-sm text-gray-500">Affichage de {{ (pageActuelle() - 1) * elementsParPage + 1 }} à {{ Math.min(pageActuelle() * elementsParPage, stocksFiltres().length) }} sur {{ stocksFiltres().length }} médicaments</span>
+          <div class="flex gap-1">
+            <button (click)="pagePrecedente()" [disabled]="pageActuelle() === 1" class="px-3 py-1 border border-gray-300 rounded bg-white text-gray-500 hover:bg-gray-50 disabled:opacity-50">Précédent</button>
+            <button (click)="pageSuivante()" [disabled]="pageActuelle() === totalPages() || totalPages() === 0" class="px-3 py-1 border border-gray-300 rounded bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50">Suivant</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Modale Structures -->
+  @if (afficherStructures()) {
+    <div class="fixed inset-0 bg-gray-900/50 z-50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-xl shadow-xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]">
+        <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+          <h3 class="text-lg font-bold text-gray-900">Carte des Structures Sanitaires</h3>
+          <button (click)="fermerStructures()" class="text-gray-400 hover:text-gray-600">
+            <mat-icon class="material-icons-outlined">close</mat-icon>
+          </button>
+        </div>
+        <div class="p-6 overflow-y-auto flex-1 flex flex-col items-center justify-center">
+          <div class="w-full h-[500px] bg-slate-50 rounded-lg border border-gray-200 relative overflow-hidden flex items-center justify-center p-4">
+            <!-- Arrière plan stylisé -->
+            <div class="absolute inset-0 opacity-10" style="background-image: radial-gradient(#64748b 1px, transparent 1px); background-size: 30px 30px;"></div>
+            
+            <!-- Carte SVG Simplifiée de la Côte d'Ivoire -->
+            <svg viewBox="0 0 100 100" class="h-full w-auto drop-shadow-2xl overflow-visible animate-in fade-in zoom-in duration-700">
+              <!-- Forme approximative stylisée de la CI -->
+              <path d="M20,10 L80,5 L95,40 L90,85 L40,95 L10,80 L5,30 Z" 
+                    fill="white" stroke="#e2e8f0" stroke-width="0.5" />
+              <!-- Grille intérieure -->
+              <path d="M20,10 L40,95 M80,5 L10,80 M95,40 L5,30" 
+                    fill="none" stroke="#f1f5f9" stroke-width="0.2" />
+              
+              <!-- Marqueurs -->
+              @for (etab of etablissementsSurCarte(); track etab.id) {
+                <g [attr.transform]="'translate(' + etab.x + ',' + etab.y + ')'" 
+                   class="cursor-pointer group"
+                   (mouseenter)="structureSurvol.set(etab)"
+                   (mouseleave)="structureSurvol.set(null)">
+                  <!-- Halo pulsant pour les structures importantes -->
+                  @if (etab.type === 'NATIONAL' || etab.type === 'REGION') {
+                    <circle r="4" class="fill-primary-200 animate-ping opacity-50"></circle>
+                  }
+                  
+                  <!-- Point Principal -->
+                  <circle r="2.5" 
+                          [class.fill-primary-600]="etab.type === 'NATIONAL'"
+                          [class.fill-indigo-500]="etab.type === 'REGION'"
+                          [class.fill-emerald-500]="etab.type === 'PHARMACIE'"
+                          class="stroke-white stroke-[0.5] transition-all duration-300 group-hover:scale-150 shadow-lg" />
+                  
+                  <!-- Étiquette simple au survol -->
+                  @if (structureSurvol()?.id === etab.id) {
+                    <foreignObject x="4" y="-12" width="150" height="40" class="pointer-events-none">
+                      <div class="bg-white/95 backdrop-blur shadow-xl border border-gray-100 rounded-lg p-2 text-[6px] animate-in zoom-in duration-300">
+                        <div class="font-bold text-gray-900 leading-tight uppercase">{{ etab.nom }}</div>
+                        <div class="text-gray-500 mt-0.5">{{ etab.type }}</div>
+                      </div>
+                    </foreignObject>
+                  }
+                </g>
+              }
+            </svg>
+
+            <!-- Légende -->
+            <div class="absolute bottom-4 left-4 bg-white/80 backdrop-blur p-3 rounded-lg border border-gray-100 shadow-sm flex flex-col gap-2">
+              <div class="flex items-center gap-2 text-xs font-medium text-gray-700">
+                <span class="w-3 h-3 rounded-full bg-primary-600"></span>
+                National (PSP-CI)
+              </div>
+              <div class="flex items-center gap-2 text-xs font-medium text-gray-700">
+                <span class="w-3 h-3 rounded-full bg-indigo-500"></span>
+                Régional
+              </div>
+              <div class="flex items-center gap-2 text-xs font-medium text-gray-700">
+                <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+                Pharmacie Locale
+              </div>
+            </div>
+
+            <!-- Overlay de chargement ou info -->
+            <div class="absolute top-4 right-4 flex flex-col gap-2 scale-90 origin-top-right">
+              <div class="bg-primary-600 text-white px-3 py-1.5 rounded-full shadow-lg text-xs font-bold flex items-center gap-2">
+                <mat-icon class="text-sm">analytics</mat-icon>
+                {{ etablissementsSurCarte().length }} Structures Actives
+              </div>
+            </div>
+          </div>
+          
+          <div class="mt-6 w-full grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 text-center">
+              <div class="text-2xl font-bold text-gray-900">31</div>
+              <div class="text-sm text-gray-500">Régions Sanitaires</div>
+            </div>
+            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 text-center">
+              <div class="text-2xl font-bold text-gray-900">119</div>
+              <div class="text-sm text-gray-500">Districts de Santé</div>
+            </div>
+            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 text-center">
+              <div class="text-2xl font-bold text-gray-900">2,100+</div>
+              <div class="text-sm text-gray-500">Pharmacies Publiques</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

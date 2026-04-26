@@ -1,0 +1,485 @@
+<div class="max-w-7xl mx-auto space-y-6 relative">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Transferts Inter-Pharmacies</h1>
+      <p class="text-sm text-gray-500 mt-1">Gérez les demandes et expéditions : {{ etablissementActuel()?.nom }}</p>
+    </div>
+    <div class="flex gap-2">
+      @if (serviceAuthentification.aPermission('gerer_transferts')) {
+        <button (click)="ouvrirModale()" 
+                [disabled]="estEnChargement()"
+                [class.btn-loading]="estEnChargement()"
+                class="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors shadow-sm">
+          <mat-icon class="material-icons-outlined text-sm" style="font-size: 18px; width: 18px; height: 18px;">add</mat-icon>
+          Nouvelle Demande
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Navigation Hiérarchique -->
+  <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm space-y-4">
+    <nav class="flex items-center text-sm text-gray-500 overflow-x-auto whitespace-nowrap pb-2 sm:pb-0">
+      <button (click)="allerAEtablissement(serviceAuthentification.utilisateurActuel()?.etablissementId || null)" 
+              class="hover:text-primary-600 flex items-center">
+        <mat-icon class="text-sm mr-1">home</mat-icon> Racine
+      </button>
+      @for (etab of cheminNavigation(); track etab.id) {
+        <mat-icon class="text-xs mx-2">chevron_right</mat-icon>
+        <button (click)="allerAEtablissement(etab.id)" 
+                [class.text-primary-600]="etab.id === etablissementActuelId()"
+                [class.font-bold]="etab.id === etablissementActuelId()"
+                class="hover:text-primary-600">
+          {{ etab.nom }}
+        </button>
+      }
+    </nav>
+
+    @if (sousEtablissements().length > 0) {
+      <div class="pt-2 border-t border-gray-100">
+        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+          {{ etablissementActuel()?.type === 'NATIONAL' ? 'Régions' : 'Pharmacies' }}
+        </p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+          @for (sous of sousEtablissements(); track sous.id) {
+            <button (click)="allerAEtablissement(sous.id)" 
+                    class="flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:border-primary-300 hover:bg-primary-50 transition-all text-left group">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded bg-gray-100 flex items-center justify-center text-gray-500 group-hover:bg-primary-100 group-hover:text-primary-600">
+                  <mat-icon class="text-sm">{{ sous.type === 'REGION' ? 'location_city' : 'local_pharmacy' }}</mat-icon>
+                </div>
+                <span class="text-sm font-medium text-gray-700 group-hover:text-primary-700">{{ sous.nom }}</span>
+              </div>
+              <mat-icon class="text-gray-300 group-hover:text-primary-400">chevron_right</mat-icon>
+            </button>
+          }
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Onglets principaux -->
+  <div class="border-b border-gray-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <nav class="-mb-px flex space-x-8">
+      <button (click)="vueActuelle.set('demandes')" [class.border-primary-500]="vueActuelle() === 'demandes'" [class.text-primary-600]="vueActuelle() === 'demandes'" [class.border-transparent]="vueActuelle() !== 'demandes'" [class.text-gray-500]="vueActuelle() !== 'demandes'" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm hover:text-gray-700 hover:border-gray-300">
+        Demandes ({{ demandesFiltrees().length }})
+      </button>
+      <button (click)="vueActuelle.set('transferts')" [class.border-primary-500]="vueActuelle() === 'transferts'" [class.text-primary-600]="vueActuelle() === 'transferts'" [class.border-transparent]="vueActuelle() !== 'transferts'" [class.text-gray-500]="vueActuelle() !== 'transferts'" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm hover:text-gray-700 hover:border-gray-300">
+        Transferts Effectifs ({{ transfertsFiltres().length }})
+      </button>
+    </nav>
+
+    @if (vueActuelle() === 'transferts') {
+      <div class="flex p-0.5 bg-gray-100 rounded-lg border border-gray-200 mb-2 md:mb-0">
+        <button (click)="sousVueTransfert.set('actifs'); pageActuelle.set(1)" 
+                [class.bg-white]="sousVueTransfert() === 'actifs'" [class.shadow-sm]="sousVueTransfert() === 'actifs'"
+                class="px-4 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all">
+          En Cours
+        </button>
+        <button (click)="sousVueTransfert.set('historique'); pageActuelle.set(1)" 
+                [class.bg-white]="sousVueTransfert() === 'historique'" [class.shadow-sm]="sousVueTransfert() === 'historique'"
+                class="px-4 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all">
+          Historique
+        </button>
+      </div>
+    }
+  </div>
+
+  <!-- Recherche et Filtres -->
+  <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col sm:flex-row gap-4">
+    <div class="flex-1 relative">
+      <mat-icon class="material-icons-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</mat-icon>
+      <input type="text" [(ngModel)]="requeteRecherche" placeholder="Rechercher par référence, médicament, structure..." 
+             class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all text-sm">
+    </div>
+    <div class="flex gap-2">
+      <select [(ngModel)]="statutSelectionne" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 outline-none bg-white">
+        <option value="">Tous statuts</option>
+        @if (vueActuelle() === 'demandes') {
+          <option value="Ouverte">Ouverte</option>
+          <option value="Partiellement satisfaite">Partiellement satisfaite</option>
+          <option value="Clôturée">Clôturée</option>
+        } @else {
+          <option value="En attente">En attente</option>
+          <option value="Validé">Validé</option>
+          <option value="Refusé">Refusé</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  <!-- Cartes de Transfert -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    @if (vueActuelle() === 'demandes') {
+      @for (demande of demandesPaginees(); track demande.id) {
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
+          <div class="px-5 py-4 border-b border-gray-200 flex justify-between items-start" [class.bg-orange-50]="demande.urgence === 'Urgent'">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-bold px-2 py-0.5 rounded uppercase tracking-wider"
+                      [class.bg-orange-100]="demande.urgence === 'Urgent'" [class.text-orange-800]="demande.urgence === 'Urgent'"
+                      [class.bg-gray-100]="demande.urgence !== 'Urgent'" [class.text-gray-800]="demande.urgence !== 'Urgent'">
+                  {{ demande.urgence }}
+                </span>
+                <span class="text-sm text-gray-500 font-mono">#{{ demande.id }}</span>
+              </div>
+              <h3 class="text-lg font-semibold text-gray-900 mt-2">Demande de {{ demande.demandeurNom }}</h3>
+              <p class="text-sm text-gray-500">Cible: {{ demande.cibleNom }}</p>
+            </div>
+            <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">
+              <mat-icon>assignment</mat-icon>
+            </div>
+          </div>
+          <div class="p-5 flex-1">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-10 h-10 rounded-lg bg-primary-50 flex items-center justify-center text-primary-600">
+                <mat-icon>medication</mat-icon>
+              </div>
+              <div>
+                <p class="text-sm font-medium text-gray-900">{{ demande.medicamentNom }}</p>
+                <p class="text-xs text-gray-500">Quantité: {{ demande.quantiteSatisfaite }} / {{ demande.quantiteDemandee }}</p>
+              </div>
+            </div>
+            
+            <div class="w-full bg-gray-200 rounded-full h-2 mb-4">
+              <div class="bg-primary-600 h-2 rounded-full" [style.width.%]="(demande.quantiteSatisfaite / demande.quantiteDemandee) * 100"></div>
+            </div>
+
+            <div class="flex items-center justify-between">
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium"
+                    [class.bg-blue-50]="demande.statut === 'Ouverte'" [class.text-blue-700]="demande.statut === 'Ouverte'"
+                    [class.bg-yellow-50]="demande.statut === 'Partiellement satisfaite'" [class.text-yellow-700]="demande.statut === 'Partiellement satisfaite'"
+                    [class.bg-green-50]="demande.statut === 'Clôturée'" [class.text-green-700]="demande.statut === 'Clôturée'">
+                <span class="w-1.5 h-1.5 rounded-full"
+                      [class.bg-blue-500]="demande.statut === 'Ouverte'"
+                      [class.bg-yellow-500]="demande.statut === 'Partiellement satisfaite'"
+                      [class.bg-green-500]="demande.statut === 'Clôturée'"></span>
+                {{ demande.statut }}
+              </span>
+              <span class="text-xs text-gray-500">{{ demande.dateDemande | date:'shortDate' }}</span>
+            </div>
+          </div>
+          <div class="bg-gray-50 px-5 py-3 border-t border-gray-200 flex justify-end gap-2">
+            @if (demande.statut !== 'Clôturée' && demande.etablissementDemandeurId !== serviceAuthentification.utilisateurActuel()?.etablissementId && serviceAuthentification.aPermission('repondre_transfert')) {
+              <button (click)="ouvrirModaleReponse(demande.id, demande.quantiteDemandee - demande.quantiteSatisfaite)" class="px-3 py-1.5 bg-primary-600 text-white rounded text-sm font-medium hover:bg-primary-700 transition-colors">
+                Répondre
+              </button>
+            }
+          </div>
+        </div>
+      }
+    } @else {
+      @for (transfert of transfertsPagines(); track transfert.id) {
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
+          <div class="px-5 py-4 border-b border-gray-200 flex justify-between items-start" [class.bg-orange-50]="transfert.urgence === 'Urgent'">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-bold px-2 py-0.5 rounded uppercase tracking-wider"
+                      [class.bg-orange-100]="transfert.urgence === 'Urgent'" [class.text-orange-800]="transfert.urgence === 'Urgent'"
+                      [class.bg-gray-100]="transfert.urgence !== 'Urgent'" [class.text-gray-800]="transfert.urgence !== 'Urgent'">
+                  {{ transfert.urgence }}
+                </span>
+                <span class="text-sm text-gray-500 font-mono">#{{ transfert.reference }}</span>
+              </div>
+              <h3 class="text-lg font-semibold text-gray-900 mt-2">De {{ transfert.origine }} vers {{ transfert.destination }}</h3>
+            </div>
+            <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">
+              <mat-icon class="material-icons-outlined">swap_horiz</mat-icon>
+            </div>
+          </div>
+          <div class="p-5 flex-1">
+            <div class="space-y-3">
+              <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                <div class="flex flex-col">
+                  <span class="text-sm font-medium text-gray-900">{{ transfert.medicament }}</span>
+                </div>
+                <div class="text-right">
+                  <span class="text-sm font-bold text-gray-900">{{ transfert.quantite }} unités</span>
+                </div>
+              </div>
+            </div>
+            <div class="mt-4 flex flex-col gap-2">
+              <div class="bg-gray-50 p-3 rounded-lg text-sm text-gray-700 flex justify-between items-center">
+                <span><span class="font-medium">Statut :</span> {{ transfert.statut }}</span>
+                <span class="text-xs text-gray-400">{{ transfert.urgence }}</span>
+              </div>
+
+              <!-- Indicateurs de Mouvements Associés -->
+              @if (transfert.mouvementsAssocies.length > 0) {
+                <div class="space-y-1">
+                  @for (mov of transfert.mouvementsAssocies; track mov.id) {
+                    <div class="flex items-center gap-2 px-3 py-1.5 rounded-md border text-[10px] font-bold uppercase transition-all animate-in fade-in slide-in-from-left-2"
+                         [class.bg-emerald-50]="mov.type === 'ENTREE'" [class.text-emerald-700]="mov.type === 'ENTREE'" [class.border-emerald-100]="mov.type === 'ENTREE'"
+                         [class.bg-orange-50]="mov.type === 'SORTIE'" [class.text-orange-700]="mov.type === 'SORTIE'" [class.border-orange-100]="mov.type === 'SORTIE'">
+                      <mat-icon class="text-xs">{{ mov.type === 'ENTREE' ? 'arrow_downward' : 'arrow_upward' }}</mat-icon>
+                      Stock : {{ mov.type === 'ENTREE' ? '+' : '-' }}{{ mov.quantite }} ({{ mov.etab }})
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+          <div class="px-5 py-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-3">
+            <button (click)="voirFacture(transfert)" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors flex items-center gap-2">
+              <mat-icon class="text-sm">receipt</mat-icon>
+              Voir Facture
+            </button>
+            @if (transfert.statut === 'En attente' && serviceAuthentification.aPermission('gerer_transferts') && transfert.etablissementOrigineId === etablissementActuelId()) {
+              <button (click)="mettreAJourStatut(transfert.id, 'Refusé')" [disabled]="estEnChargement()" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-white transition-all">
+                Refuser
+              </button>
+              <button (click)="mettreAJourStatut(transfert.id, 'Expédié')" 
+                [disabled]="estEnChargement()"
+                [class.btn-loading]="estEnChargement()"
+                class="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 transition-all min-w-[140px]">
+                Valider & Expédier
+              </button>
+            } @else if (transfert.statut === 'Expédié' && serviceAuthentification.aPermission('gerer_transferts') && transfert.etablissementDestinationId === etablissementActuelId()) {
+              <button (click)="mettreAJourStatut(transfert.id, 'Livré')" 
+                [disabled]="estEnChargement()"
+                [class.btn-loading]="estEnChargement()"
+                class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-all min-w-[150px]">
+                Confirmer Réception
+              </button>
+            } @else if (transfert.statut !== 'En attente' && transfert.statut !== 'Expédié') {
+              <span class="text-sm font-medium text-gray-500">Action terminée</span>
+            } @else {
+              <span class="text-sm font-medium text-gray-500">En attente d'action de l'autre structure</span>
+            }
+          </div>
+        </div>
+      }
+    }
+  </div>
+
+  <!-- Pagination -->
+  <div class="px-6 py-3 border-t border-gray-200 bg-gray-50 flex items-center justify-between rounded-xl border">
+    <span class="text-sm text-gray-500">Affichage de {{ (pageActuelle() - 1) * elementsParPage + 1 }} à {{ Math.min(pageActuelle() * elementsParPage, vueActuelle() === 'demandes' ? demandesFiltrees().length : transfertsFiltres().length) }} sur {{ vueActuelle() === 'demandes' ? demandesFiltrees().length : transfertsFiltres().length }} éléments</span>
+    <div class="flex gap-1">
+      <button (click)="pagePrecedente()" [disabled]="pageActuelle() === 1" class="px-3 py-1 border border-gray-300 rounded bg-white text-gray-500 hover:bg-gray-50 disabled:opacity-50">Précédent</button>
+      <button (click)="pageSuivante()" [disabled]="pageActuelle() === totalPages() || totalPages() === 0" class="px-3 py-1 border border-gray-300 rounded bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50">Suivant</button>
+    </div>
+  </div>
+
+  <!-- Modale -->
+  @if (afficherModale()) {
+    <div class="fixed inset-0 bg-gray-900/50 z-50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+          <h3 class="text-lg font-bold text-gray-900">Nouvelle Demande de Transfert</h3>
+          <button (click)="fermerModale()" class="text-gray-400 hover:text-gray-600">
+            <mat-icon class="material-icons-outlined">close</mat-icon>
+          </button>
+        </div>
+        <form (submit)="soumettreTransfert($event)" class="p-6 space-y-4">
+          @if (messageErreur()) {
+            <div class="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-xs flex items-center gap-2">
+              <mat-icon class="text-sm">error_outline</mat-icon>
+              {{ messageErreur() }}
+            </div>
+          }
+          <div>
+            <label for="destination" class="block text-sm font-medium text-gray-700 mb-1">Structure cible</label>
+            <select id="destination" name="destination" [(ngModel)]="nouveauTransfert.destination" required class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 border p-2">
+              <option value="TOUS">Toutes les structures compatibles</option>
+              @for (etab of destinationsPossibles(); track etab.id) {
+                <option [value]="etab.id">{{ etab.nom }}</option>
+              }
+              @if (destinationsPossibles().length === 0) {
+                <option value="" disabled>Aucune structure compatible trouvée</option>
+              }
+            </select>
+          </div>
+          <div class="space-y-4">
+            <div class="flex justify-between items-center">
+              <h4 class="text-sm font-medium text-gray-900">Médicaments demandés</h4>
+              <button type="button" (click)="ajouterLigneTransfert()" class="text-sm text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1">
+                <mat-icon class="text-sm">add</mat-icon> Ajouter
+              </button>
+            </div>
+
+            <div class="relative w-full">
+              <mat-icon class="material-icons-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</mat-icon>
+              <input type="text" [(ngModel)]="rechercheMedicament" name="rechercheMedicament" placeholder="Filtrer la liste des médicaments..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all text-sm">
+            </div>
+            
+            @for (ligne of nouveauTransfert.lignes; track $index) {
+              <div class="flex gap-3 items-end bg-gray-50 p-3 rounded-lg border border-gray-100">
+                <div class="flex-1">
+                  <label [for]="'medicament_' + $index" class="block text-xs font-medium text-gray-700 mb-1">Médicament</label>
+                  <select [id]="'medicament_' + $index" [(ngModel)]="ligne.medicament" name="medicament_{{$index}}" required class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 border p-2 text-sm">
+                    @for (med of medicamentsFiltres(); track med.id) {
+                      <option [value]="med.id">{{ med.dci }}</option>
+                    }
+                  </select>
+                </div>
+                <div class="w-24">
+                  <label [for]="'quantite_' + $index" class="block text-xs font-medium text-gray-700 mb-1">Quantité</label>
+                  <input [id]="'quantite_' + $index" type="number" [(ngModel)]="ligne.quantite" name="quantite_{{$index}}" required min="1" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 border p-2 text-sm">
+                </div>
+                @if (nouveauTransfert.lignes.length > 1) {
+                  <button type="button" (click)="supprimerLigneTransfert($index)" class="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors mb-0.5">
+                    <mat-icon class="text-sm">delete</mat-icon>
+                  </button>
+                }
+              </div>
+            }
+          </div>
+          <div class="grid grid-cols-1 gap-4">
+            <div>
+              <label for="urgence" class="block text-sm font-medium text-gray-700 mb-1">Urgence</label>
+              <select id="urgence" name="urgence" [(ngModel)]="nouveauTransfert.urgence" required class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 border p-2">
+                <option value="Normal">Normal</option>
+                <option value="Urgent">Urgent</option>
+              </select>
+            </div>
+          </div>
+          <div class="pt-4 flex justify-end gap-3">
+            <button type="button" (click)="fermerModale()" [disabled]="estEnChargement()" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all">Annuler</button>
+            <button type="submit" 
+              [disabled]="estEnChargement()"
+              [class.btn-loading]="estEnChargement()"
+              class="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 min-w-[140px] transition-all">
+              Envoyer Demande
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- Modale Facture (Transfer Note View) -->
+  @if (transfertSelectionne()) {
+    <div class="fixed inset-0 bg-gray-900/50 z-50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-xl shadow-xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]">
+        <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-900 text-white">
+          <div class="flex items-center gap-3">
+            <mat-icon class="text-primary-400">receipt</mat-icon>
+            <h3 class="text-lg font-bold">Détails du Transfert (Bon)</h3>
+          </div>
+          <button (click)="fermerFacture()" class="text-white/80 hover:text-white">
+            <mat-icon class="material-icons-outlined">close</mat-icon>
+          </button>
+        </div>
+        
+        <div class="p-8 overflow-y-auto flex-1 bg-white" id="invoice-content">
+          <!-- Header Facture -->
+          <div class="flex justify-between items-start mb-8">
+            <div>
+              <div class="flex items-center gap-2 mb-4">
+                <div class="w-10 h-10 bg-primary-600 rounded flex items-center justify-center text-white font-bold">PSP</div>
+                <span class="text-xl font-bold text-gray-900">PSP-CI</span>
+              </div>
+              <p class="text-sm text-gray-500">République de Côte d'Ivoire</p>
+              <p class="text-sm text-gray-500">Ministère de la Santé</p>
+            </div>
+            <div class="text-right">
+              <h4 class="text-2xl font-black text-primary-600 uppercase">Bon de Transfert</h4>
+              <p class="text-sm font-bold text-gray-900">Réf: {{ transfertSelectionne()?.reference }}</p>
+              <p class="text-sm text-gray-500">Statut: {{ transfertSelectionne()?.statut }}</p>
+              <span class="inline-block mt-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider"
+                    [class.bg-orange-100]="transfertSelectionne()?.urgence === 'Urgent'" [class.text-orange-800]="transfertSelectionne()?.urgence === 'Urgent'"
+                    [class.bg-gray-100]="transfertSelectionne()?.urgence !== 'Urgent'" [class.text-gray-800]="transfertSelectionne()?.urgence !== 'Urgent'">
+                {{ transfertSelectionne()?.urgence }}
+              </span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-8 mb-8">
+            <div class="p-4 bg-gray-50 rounded-lg border border-gray-100">
+              <p class="text-xs font-bold text-gray-400 uppercase mb-2">Structure Expéditrice (Origine)</p>
+              <p class="text-sm font-bold text-gray-900">{{ transfertSelectionne()?.origine }}</p>
+              <p class="text-xs text-gray-500 mt-1">ID: {{ transfertSelectionne()?.etablissementOrigineId }}</p>
+            </div>
+            <div class="p-4 bg-gray-50 rounded-lg border border-gray-100">
+              <p class="text-xs font-bold text-gray-400 uppercase mb-2">Structure Destinataire (Destination)</p>
+              <p class="text-sm font-bold text-gray-900">{{ transfertSelectionne()?.destination }}</p>
+              <p class="text-xs text-gray-500 mt-1">ID: {{ transfertSelectionne()?.etablissementDestinationId }}</p>
+            </div>
+          </div>
+
+          <!-- Table des articles -->
+          <div class="mb-8">
+            <table class="w-full text-left">
+              <thead>
+                <tr class="border-b-2 border-gray-900">
+                  <th class="py-3 text-xs font-bold text-gray-900 uppercase">Désignation du Médicament</th>
+                  <th class="py-3 text-xs font-bold text-gray-900 uppercase text-center">Forme / Dosage</th>
+                  <th class="py-3 text-xs font-bold text-gray-900 uppercase text-right">Quantité Transférée</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                @for (ligne of lignesTransfertSelectionne(); track ligne.id) {
+                  <tr>
+                    <td class="py-4">
+                      <p class="text-sm font-bold text-gray-900">{{ ligne.medicamentNom }}</p>
+                    </td>
+                    <td class="py-4 text-center">
+                      <p class="text-sm text-gray-600">{{ ligne.forme }} • {{ ligne.dosage }}</p>
+                    </td>
+                    <td class="py-4 text-right">
+                      <p class="text-sm font-bold text-gray-900">{{ ligne.quantite }} unités</p>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <div class="mt-12 grid grid-cols-2 gap-8">
+            <div class="text-center">
+              <p class="text-xs font-bold text-gray-400 uppercase mb-8">Cachet & Signature Expéditeur</p>
+              <div class="h-20 border-b border-gray-300 border-dashed"></div>
+            </div>
+            <div class="text-center">
+              <p class="text-xs font-bold text-gray-400 uppercase mb-8">Cachet & Signature Destinataire</p>
+              <div class="h-20 border-b border-gray-300 border-dashed"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-3">
+          <button (click)="fermerFacture()" class="px-6 py-2 bg-gray-900 text-white font-bold rounded-lg hover:bg-black transition-colors shadow-md">
+            Fermer
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Modale Réponse -->
+  @if (afficherModaleReponse()) {
+    <div class="fixed inset-0 bg-gray-900/50 z-50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+          <h3 class="text-lg font-bold text-gray-900">Répondre à la Demande</h3>
+          <button (click)="fermerModaleReponse()" class="text-gray-400 hover:text-gray-600">
+            <mat-icon class="material-icons-outlined">close</mat-icon>
+          </button>
+        </div>
+        <form (submit)="soumettreReponse($event)" class="p-6 space-y-4">
+          @if (messageErreur()) {
+            <div class="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-xs flex items-center gap-2">
+              <mat-icon class="text-sm">error_outline</mat-icon>
+              {{ messageErreur() }}
+            </div>
+          }
+          <div>
+            <label for="quantiteReponse" class="block text-sm font-medium text-gray-700 mb-1">Quantité à transférer</label>
+            <input id="quantiteReponse" type="number" name="quantiteReponse" [(ngModel)]="reponseTransfert.quantite" required min="1" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 border p-2">
+            <p class="text-xs text-gray-500 mt-1">Vous pouvez transférer une partie ou la totalité de la quantité demandée.</p>
+          </div>
+          <div class="pt-4 flex justify-end gap-3">
+            <button type="button" (click)="fermerModaleReponse()" [disabled]="estEnChargement()" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all">Annuler</button>
+            <button type="submit" 
+              [disabled]="estEnChargement()"
+              [class.btn-loading]="estEnChargement()"
+              class="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 min-w-[140px] transition-all">
+              Valider le Transfert
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>

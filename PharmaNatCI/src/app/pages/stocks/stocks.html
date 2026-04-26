@@ -1,0 +1,277 @@
+<div class="max-w-7xl mx-auto space-y-6 relative">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Gestion des Stocks</h1>
+      <p class="text-sm text-gray-500 mt-1">Consultez et gérez l'inventaire en temps réel</p>
+    </div>
+    <div class="flex gap-2">
+      @if (serviceAuthentification.aPermission('ajuster_stock')) {
+        <button (click)="ouvrirModale()" class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm">
+          <mat-icon class="material-icons-outlined text-sm" style="font-size: 18px; width: 18px; height: 18px;">fact_check</mat-icon>
+          Faire un inventaire
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Navigation Hiérarchique -->
+  <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm space-y-4">
+    <nav class="flex items-center text-sm text-gray-500 overflow-x-auto whitespace-nowrap pb-2 sm:pb-0">
+      <button (click)="allerAEtablissement(serviceAuthentification.utilisateurActuel()?.etablissementId || null)" 
+              class="hover:text-primary-600 flex items-center">
+        <mat-icon class="text-sm mr-1">home</mat-icon> Racine
+      </button>
+      @for (etab of cheminNavigation(); track etab.id) {
+        <mat-icon class="text-xs mx-2">chevron_right</mat-icon>
+        <button (click)="allerAEtablissement(etab.id)" 
+                [class.text-primary-600]="etab.id === etablissementActuelId()"
+                [class.font-bold]="etab.id === etablissementActuelId()"
+                class="hover:text-primary-600">
+          {{ etab.nom }}
+        </button>
+      }
+    </nav>
+
+    @if (sousEtablissements().length > 0) {
+      <div class="pt-2 border-t border-gray-100">
+        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+          {{ etablissementActuel()?.type === 'NATIONAL' ? 'Régions' : 'Pharmacies' }}
+        </p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+          @for (sous of sousEtablissements(); track sous.id) {
+            <button (click)="allerAEtablissement(sous.id)" 
+                    class="flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:border-primary-300 hover:bg-primary-50 transition-all text-left group">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded bg-gray-100 flex items-center justify-center text-gray-500 group-hover:bg-primary-100 group-hover:text-primary-600">
+                  <mat-icon class="text-sm">{{ sous.type === 'REGION' ? 'location_city' : 'local_pharmacy' }}</mat-icon>
+                </div>
+                <span class="text-sm font-medium text-gray-700 group-hover:text-primary-700">{{ sous.nom }}</span>
+              </div>
+              <mat-icon class="text-gray-300 group-hover:text-primary-400">chevron_right</mat-icon>
+            </button>
+          }
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Filters -->
+  <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col sm:flex-row gap-4">
+    <div class="flex-1 relative">
+      <mat-icon class="material-icons-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</mat-icon>
+      <input type="text" [(ngModel)]="requeteRecherche" placeholder="Rechercher par DCI, nom commercial..." 
+             class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all text-sm">
+    </div>
+    <div class="flex gap-2">
+      <select [(ngModel)]="categorieSelectionnee" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 outline-none bg-white">
+        <option value="">Toutes catégories</option>
+        <option value="Antipaludéen">Antipaludéens</option>
+        <option value="Antibiotique">Antibiotiques</option>
+        <option value="Analgésique">Analgésiques</option>
+      </select>
+      <select [(ngModel)]="statutSelectionne" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 outline-none bg-white">
+        <option value="">Tous statuts</option>
+        <option value="Normal">Normal</option>
+        <option value="Stock Bas">Stock Bas</option>
+        <option value="Rupture">Rupture</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Data Table -->
+  <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Médicament (DCI)</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Catégorie</th>
+            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Stock Dispo</th>
+            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">CMM</th>
+            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Couverture</th>
+            <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
+            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          @for (item of inventairePagine(); track item.id) {
+            <tr class="hover:bg-gray-50 transition-colors">
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center gap-3">
+                  @if (item.image) {
+                    <img [src]="item.image" [alt]="item.nom" class="w-10 h-10 rounded-lg object-cover border border-gray-200" referrerpolicy="no-referrer">
+                  } @else {
+                    <div class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 border border-gray-200">
+                      <mat-icon class="text-sm">medication</mat-icon>
+                    </div>
+                  }
+                  <div class="flex flex-col">
+                    <span class="text-sm font-medium text-gray-900">{{ item.nom }}</span>
+                    <span class="text-xs text-gray-500">{{ item.forme }} • {{ item.dosage }}</span>
+                  </div>
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="text-sm text-gray-600">{{ item.categorie }}</span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-right">
+                <span class="text-sm font-mono font-medium" [class.text-red-600]="item.stock === 0">{{ item.stock }}</span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-right">
+                <span class="text-sm text-gray-500">{{ item.cmm }}</span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-right">
+                <span class="text-sm font-medium" 
+                      [class.text-red-600]="item.joursCouverture < 15"
+                      [class.text-orange-500]="item.joursCouverture >= 15 && item.joursCouverture < 45"
+                      [class.text-green-600]="item.joursCouverture >= 45">
+                  {{ item.joursCouverture }} j
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-center">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                      [class.bg-green-100]="item.statut === 'Normal'"
+                      [class.text-green-800]="item.statut === 'Normal'"
+                      [class.bg-orange-100]="item.statut === 'Stock Bas'"
+                      [class.text-orange-800]="item.statut === 'Stock Bas'"
+                      [class.bg-red-100]="item.statut === 'Rupture'"
+                      [class.text-red-800]="item.statut === 'Rupture'">
+                  {{ item.statut }}
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <button (click)="voirDetails(item)" class="text-primary-600 hover:text-primary-900 p-1" title="Détails des lots">
+                  <mat-icon class="material-icons-outlined" style="font-size: 20px; width: 20px; height: 20px;">visibility</mat-icon>
+                </button>
+                @if (item.statut !== 'Normal') {
+                  @if (serviceAuthentification.aPermission('creer_commande')) {
+                    <button (click)="genererCommande(item)" class="text-primary-600 hover:text-primary-900 p-1 ml-2" title="Générer commande">
+                      <mat-icon class="material-icons-outlined" style="font-size: 20px; width: 20px; height: 20px;">add_shopping_cart</mat-icon>
+                    </button>
+                  }
+                  @if (serviceAuthentification.aPermission('gerer_transferts')) {
+                    <button (click)="demanderTransfert()" class="text-blue-600 hover:text-blue-900 p-1 ml-2" title="Demander transfert">
+                      <mat-icon class="material-icons-outlined" style="font-size: 20px; width: 20px; height: 20px;">swap_horiz</mat-icon>
+                    </button>
+                  }
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <div class="px-6 py-3 border-t border-gray-200 bg-gray-50 flex items-center justify-between">
+      <span class="text-sm text-gray-500">Affichage de {{ (pageActuelle() - 1) * elementsParPage + 1 }} à {{ Math.min(pageActuelle() * elementsParPage, inventaireFiltre().length) }} sur {{ inventaireFiltre().length }} médicaments</span>
+      <div class="flex gap-1">
+        <button (click)="pagePrecedente()" [disabled]="pageActuelle() === 1" class="px-3 py-1 border border-gray-300 rounded bg-white text-gray-500 hover:bg-gray-50 disabled:opacity-50">Précédent</button>
+        <button (click)="pageSuivante()" [disabled]="pageActuelle() === totalPages() || totalPages() === 0" class="px-3 py-1 border border-gray-300 rounded bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50">Suivant</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Details Modal -->
+  @if (afficherModaleDetails()) {
+    <div class="fixed inset-0 bg-gray-900/50 z-50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+          <h3 class="text-lg font-bold text-gray-900">Détails du Médicament</h3>
+          <button (click)="fermerModaleDetails()" class="text-gray-400 hover:text-gray-600">
+            <mat-icon class="material-icons-outlined">close</mat-icon>
+          </button>
+        </div>
+        <div class="p-6 space-y-4">
+          @if (elementSelectionne()?.image) {
+            <div class="w-full h-48 rounded-xl overflow-hidden border border-gray-200 mb-4">
+              <img [src]="elementSelectionne()?.image" [alt]="elementSelectionne()?.nom" class="w-full h-full object-cover" referrerpolicy="no-referrer">
+            </div>
+          }
+          <div class="flex justify-between border-b pb-2">
+            <span class="text-gray-600">Nom:</span>
+            <span class="font-medium">{{ elementSelectionne()?.nom }}</span>
+          </div>
+          <div class="flex justify-between border-b pb-2">
+            <span class="text-gray-600">Forme & Dosage:</span>
+            <span class="font-medium">{{ elementSelectionne()?.forme }} {{ elementSelectionne()?.dosage }}</span>
+          </div>
+          <div class="flex justify-between border-b pb-2">
+            <span class="text-gray-600">Catégorie:</span>
+            <span class="font-medium">{{ elementSelectionne()?.categorie }}</span>
+          </div>
+          <div class="flex justify-between border-b pb-2">
+            <span class="text-gray-600">Stock Actuel:</span>
+            <span class="font-medium">{{ elementSelectionne()?.stock }}</span>
+          </div>
+          <div class="flex justify-between border-b pb-2">
+            <span class="text-gray-600">CMM:</span>
+            <span class="font-medium">{{ elementSelectionne()?.cmm }}</span>
+          </div>
+          <div class="flex justify-between border-b pb-2">
+            <span class="text-gray-600">Couverture:</span>
+            <span class="font-medium">{{ elementSelectionne()?.joursCouverture }} jours</span>
+          </div>
+          <div class="flex justify-between pb-2">
+            <span class="text-gray-600">Statut:</span>
+            <span class="font-medium">{{ elementSelectionne()?.statut }}</span>
+          </div>
+          <div class="pt-4 flex justify-end">
+            <button (click)="fermerModaleDetails()" class="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700">Fermer</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Modal -->
+  @if (afficherModale()) {
+    <div class="fixed inset-0 bg-gray-900/50 z-50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+          <h3 class="text-lg font-bold text-gray-900">Ajustement d'Inventaire</h3>
+          <button (click)="fermerModale()" class="text-gray-400 hover:text-gray-600">
+            <mat-icon class="material-icons-outlined">close</mat-icon>
+          </button>
+        </div>
+        <form (submit)="soumettreInventaire($event)" class="p-6 space-y-4">
+          @if (messageErreur()) {
+            <div class="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-xs flex items-center gap-2">
+              <mat-icon class="text-sm">error_outline</mat-icon>
+              {{ messageErreur() }}
+            </div>
+          }
+          <div>
+            <label for="idMedicament" class="block text-sm font-medium text-gray-700 mb-1">Médicament</label>
+            <select id="idMedicament" name="idMedicament" [(ngModel)]="ajustement.idMedicament" required class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 border p-2">
+              @for (med of inventaire(); track med.medicamentId) {
+                <option [value]="med.medicamentId">{{ med.nom }} (Stock actuel: {{ med.stock }})</option>
+              }
+            </select>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label for="nouveauStock" class="block text-sm font-medium text-gray-700 mb-1">Stock Physique</label>
+              <input id="nouveauStock" type="number" name="nouveauStock" [(ngModel)]="ajustement.nouveauStock" required min="0" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 border p-2">
+            </div>
+            <div>
+              <label for="lot" class="block text-sm font-medium text-gray-700 mb-1">Lot</label>
+              <input id="lot" type="text" name="lot" [(ngModel)]="ajustement.lot" required class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 border p-2">
+            </div>
+          </div>
+          <div>
+            <label for="motif" class="block text-sm font-medium text-gray-700 mb-1">Motif</label>
+            <input id="motif" type="text" name="motif" [(ngModel)]="ajustement.motif" required placeholder="Ex: Inventaire mensuel, Casse, Péremption..." class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 border p-2">
+          </div>
+          <div class="pt-4 flex justify-end gap-3">
+            <button type="button" (click)="fermerModale()" [disabled]="estEnChargement()" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all">Annuler</button>
+            <button type="submit" 
+              [disabled]="estEnChargement()"
+              [class.btn-loading]="estEnChargement()"
+              class="px-5 py-2 bg-primary-600 text-white rounded-lg text-sm font-bold shadow-md hover:bg-primary-700 transition-all min-w-[120px]">
+              Enregistrer
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>

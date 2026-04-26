@@ -1,0 +1,76 @@
+<div class="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+  <div class="sm:mx-auto sm:w-full sm:max-w-md text-center">
+    <div class="mx-auto h-16 w-16 bg-primary-600 rounded-2xl flex items-center justify-center shadow-lg mb-4">
+      <span class="material-icons-outlined text-white text-3xl">local_pharmacy</span>
+    </div>
+    <h2 class="mt-2 text-center text-3xl font-extrabold text-gray-900 tracking-tight">
+      PharmaNat-CI
+    </h2>
+    <p class="mt-2 text-center text-sm text-gray-600">
+      Système National de Gestion des Pharmacies Publiques
+    </p>
+  </div>
+
+  <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+    <div class="bg-white py-8 px-4 shadow-xl sm:rounded-2xl sm:px-10 border border-gray-100">
+      
+      <form class="space-y-6" (submit)="connexion($event)">
+        
+        @if (erreur()) {
+          <div class="bg-red-50 p-4 rounded-lg border border-red-100 mb-6">
+            <p class="text-sm text-red-700">{{ erreur() }}</p>
+          </div>
+        }
+
+        <div>
+          <label for="matricule" class="block text-sm font-medium text-gray-700">Matricule</label>
+          <div class="mt-1">
+            <input id="matricule" name="matricule" type="text" [ngModel]="matricule()" (ngModelChange)="matricule.set($event)" required
+              class="block w-full px-3 py-3 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-lg border bg-gray-50 placeholder-gray-400"
+              placeholder="Ex: NAT001">
+          </div>
+        </div>
+
+        <div>
+          <label for="motDePasse" class="block text-sm font-medium text-gray-700">Mot de passe</label>
+          <div class="mt-1">
+            <input id="motDePasse" name="motDePasse" type="password" [ngModel]="motDePasse()" (ngModelChange)="motDePasse.set($event)" required
+              class="block w-full px-3 py-3 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-lg border bg-gray-50 placeholder-gray-400"
+              placeholder="••••••••">
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between">
+          <div class="flex items-center">
+            <input id="se_souvenir" name="se_souvenir" type="checkbox"
+              class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
+            <label for="se_souvenir" class="ml-2 block text-sm text-gray-900">
+              Se souvenir de moi
+            </label>
+          </div>
+
+          <div class="text-sm">
+            <a href="#" class="font-medium text-primary-600 hover:text-primary-500">
+              Mot de passe oublié ?
+            </a>
+          </div>
+        </div>
+
+        <div>
+          <button type="submit" 
+            [disabled]="chargement()"
+            [class.btn-loading]="chargement()"
+            class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all disabled:opacity-60 disabled:cursor-not-allowed">
+            Se connecter
+          </button>
+        </div>
+      </form>
+      
+      <div class="mt-6 text-center">
+        <p class="text-xs text-gray-500">
+          Accès réservé au personnel autorisé du Ministère de la Santé et de l'Hygiène Publique de Côte d'Ivoire.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>

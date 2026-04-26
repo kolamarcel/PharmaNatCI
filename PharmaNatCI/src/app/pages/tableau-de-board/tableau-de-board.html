@@ -1,0 +1,265 @@
+<div class="max-w-7xl mx-auto space-y-6">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Tableau de bord</h1>
+      <p class="text-sm text-gray-500 mt-1">Vue d'ensemble : {{ etablissementActuel()?.nom || 'Global' }}</p>
+    </div>
+    <div class="flex gap-2">
+      <button (click)="telechargerRapport()" class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm">
+        <mat-icon class="material-icons-outlined text-sm" style="font-size: 18px; width: 18px; height: 18px;">download</mat-icon>
+        Rapport
+      </button>
+      @if (serviceAuthentification.aPermission('creer_mouvement')) {
+        <a routerLink="/mouvements" class="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors shadow-sm">
+          <mat-icon class="material-icons-outlined text-sm" style="font-size: 18px; width: 18px; height: 18px;">add</mat-icon>
+          Nouveau Mouvement
+        </a>
+      }
+    </div>
+  </div>
+
+  <!-- Navigation Hiérarchique -->
+  <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm space-y-4">
+    <nav class="flex items-center text-sm text-gray-500 overflow-x-auto whitespace-nowrap pb-2 sm:pb-0">
+      <button (click)="allerAEtablissement(serviceAuthentification.utilisateurActuel()?.etablissementId || null)" 
+              class="hover:text-primary-600 flex items-center">
+        <mat-icon class="text-sm mr-1">home</mat-icon> Racine
+      </button>
+      @for (etab of cheminNavigation(); track etab.id) {
+        <mat-icon class="text-xs mx-2">chevron_right</mat-icon>
+        <button (click)="allerAEtablissement(etab.id)" 
+                [class.text-primary-600]="etab.id === etablissementActuelId()"
+                [class.font-bold]="etab.id === etablissementActuelId()"
+                class="hover:text-primary-600">
+          {{ etab.nom }}
+        </button>
+      }
+    </nav>
+
+    @if (sousEtablissements().length > 0) {
+      <div class="pt-2 border-t border-gray-100">
+        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+          {{ etablissementActuel()?.type === 'NATIONAL' ? 'Régions' : 'Pharmacies' }}
+        </p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+          @for (sous of sousEtablissements(); track sous.id) {
+            <button (click)="allerAEtablissement(sous.id)" 
+                    class="flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:border-primary-300 hover:bg-primary-50 transition-all text-left group">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded bg-gray-100 flex items-center justify-center text-gray-500 group-hover:bg-primary-100 group-hover:text-primary-600">
+                  <mat-icon class="text-sm">{{ sous.type === 'REGION' ? 'location_city' : 'local_pharmacy' }}</mat-icon>
+                </div>
+                <span class="text-sm font-medium text-gray-700 group-hover:text-primary-700">{{ sous.nom }}</span>
+              </div>
+              <mat-icon class="text-gray-300 group-hover:text-primary-400">chevron_right</mat-icon>
+            </button>
+          }
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+      <div class="flex items-center justify-between">
+        <div class="text-sm font-medium text-gray-500">Disponibilité Essentiels</div>
+        <div class="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center text-green-600">
+          <mat-icon class="material-icons-outlined" style="font-size: 18px; width: 18px; height: 18px;">check_circle</mat-icon>
+        </div>
+      </div>
+      <div class="mt-4 flex items-baseline gap-2">
+        <div class="text-3xl font-bold text-gray-900">{{ tauxDisponibilite() }}%</div>
+        <div class="text-sm font-medium text-green-600 flex items-center">
+          <mat-icon class="material-icons-outlined" style="font-size: 16px; width: 16px; height: 16px;">arrow_upward</mat-icon>
+          {{ tendanceDispo() }}%
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+      <div class="flex items-center justify-between">
+        <div class="text-sm font-medium text-gray-500">Ruptures Actives</div>
+        <div class="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center text-red-600">
+          <mat-icon class="material-icons-outlined" style="font-size: 18px; width: 18px; height: 18px;">warning</mat-icon>
+        </div>
+      </div>
+      <div class="mt-4 flex items-baseline gap-2">
+        <div class="text-3xl font-bold text-gray-900">{{ nombreRuptures() }}</div>
+        <div class="text-sm font-medium text-gray-500">médicaments</div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+      <div class="flex items-center justify-between">
+        <div class="text-sm font-medium text-gray-500">Alertes Stock Bas</div>
+        <div class="w-8 h-8 rounded-full bg-orange-50 flex items-center justify-center text-orange-600">
+          <mat-icon class="material-icons-outlined" style="font-size: 18px; width: 18px; height: 18px;">inventory</mat-icon>
+        </div>
+      </div>
+      <div class="mt-4 flex items-baseline gap-2">
+        <div class="text-3xl font-bold text-gray-900">{{ nombreStockBas() }}</div>
+        <div class="text-sm font-medium text-gray-500">médicaments</div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+      <div class="flex items-center justify-between">
+        <div class="text-sm font-medium text-gray-500">Transferts en attente</div>
+        <div class="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+          <mat-icon class="material-icons-outlined" style="font-size: 18px; width: 18px; height: 18px;">local_shipping</mat-icon>
+        </div>
+      </div>
+      <div class="mt-4 flex items-baseline gap-2">
+        <div class="text-3xl font-bold text-gray-900">{{ nombreTransfertsEnAttente() }}</div>
+        <div class="text-sm font-medium text-gray-500">à valider</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Map and Charts Section -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex flex-col">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-lg font-semibold text-gray-900">Statut des Transferts</h2>
+      </div>
+      <div class="flex-1 h-[250px] relative">
+        <canvas baseChart
+          [data]="pieChartData()"
+          [options]="pieChartOptions"
+          [type]="pieChartType">
+        </canvas>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex flex-col">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-lg font-semibold text-gray-900">Niveaux de Stock (Top 5)</h2>
+      </div>
+      <div class="flex-1 h-[250px] pt-4 relative">
+        <canvas baseChart
+          [data]="barChartData()"
+          [options]="barChartOptions"
+          [type]="barChartType">
+        </canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Alerts List -->
+    <div class="lg:col-span-2 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
+      <div class="px-5 py-4 border-b border-gray-200 flex justify-between items-center">
+        <h2 class="text-lg font-semibold text-gray-900">Alertes Stock</h2>
+        <a routerLink="/stocks" class="text-sm font-medium text-primary-600 hover:text-primary-700">Voir le stock</a>
+      </div>
+      <div class="divide-y divide-gray-100 flex-1 overflow-y-auto max-h-[400px]">
+        @for (alerte of alertesStock(); track alerte.id) {
+          <div class="p-5 flex items-start gap-4 hover:bg-gray-50 transition-colors">
+            <div class="mt-0.5 w-2 h-2 rounded-full flex-shrink-0" 
+                 [class.bg-red-500]="alerte.statut === 'Rupture'"
+                 [class.bg-orange-500]="alerte.statut === 'Stock Bas'"></div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium text-gray-900 truncate">{{ alerte.nom }} {{ alerte.dosage }}</p>
+              <p class="text-sm text-gray-500 mt-1">
+                @if (alerte.statut === 'Rupture') {
+                  Rupture de stock confirmée.
+                } @else {
+                  Stock sous le seuil de sécurité (CMM: {{ alerte.cmm }}).
+                }
+              </p>
+              <div class="flex items-center gap-3 mt-2">
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
+                      [class.bg-red-100]="alerte.statut === 'Rupture'" [class.text-red-800]="alerte.statut === 'Rupture'"
+                      [class.bg-orange-100]="alerte.statut === 'Stock Bas'" [class.text-orange-800]="alerte.statut === 'Stock Bas'">
+                  Stock: {{ alerte.stock }}
+                </span>
+                @if (serviceAuthentification.aPermission('creer_commande')) {
+                  <button (click)="genererCommande(alerte)" 
+                          [disabled]="estEnChargement()"
+                          [class.btn-loading]="estEnChargement()"
+                          class="text-xs font-medium text-primary-600 hover:text-primary-700 flex items-center gap-1">
+                    <mat-icon class="material-icons-outlined" style="font-size: 14px; width: 14px; height: 14px;">add_shopping_cart</mat-icon>
+                    Générer Commande
+                  </button>
+                }
+              </div>
+            </div>
+            <a routerLink="/stocks" class="text-gray-400 hover:text-gray-600">
+              <mat-icon class="material-icons-outlined" style="font-size: 20px; width: 20px; height: 20px;">chevron_right</mat-icon>
+            </a>
+          </div>
+        }
+        @if (alertesStock().length === 0) {
+          <div class="p-8 text-center text-gray-500">
+            Aucune alerte de stock.
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
+      <div class="px-5 py-4 border-b border-gray-200">
+        <h2 class="text-lg font-semibold text-gray-900">Mouvements Récents</h2>
+      </div>
+      <div class="p-5 flex-1 overflow-y-auto max-h-[400px]">
+        <div class="relative border-l border-gray-200 ml-3 space-y-6">
+          @for (activite of mouvementsRecents(); track activite.id) {
+            <div class="relative pl-6">
+              <span class="absolute -left-1.5 top-1.5 w-3 h-3 rounded-full border-2 border-white"
+                    [class.bg-green-500]="activite.direction === 'entree'"
+                    [class.bg-gray-400]="activite.direction === 'sortie'"
+                    [class.bg-red-500]="activite.direction === 'destruction'"></span>
+              <p class="text-sm font-medium text-gray-900">{{ activite.type }}</p>
+              <p class="text-xs text-gray-500 mt-0.5">{{ activite.nomMedicament }} ({{ activite.quantite }} unités)</p>
+              <p class="text-xs text-gray-400 mt-1">{{ activite.date }} par {{ activite.auteur }}</p>
+            </div>
+          }
+        </div>
+      </div>
+      <div class="p-4 border-t border-gray-200 bg-gray-50 text-center">
+        <a routerLink="/mouvements" class="text-sm font-medium text-primary-600 hover:text-primary-700">Voir tout l'historique</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Report Modal -->
+  @if (afficherModaleRapport()) {
+    <div class="fixed inset-0 bg-gray-900/50 z-50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+          <h3 class="text-lg font-bold text-gray-900">Télécharger le Rapport</h3>
+          <button (click)="fermerModaleRapport()" class="text-gray-400 hover:text-gray-600">
+            <mat-icon class="material-icons-outlined">close</mat-icon>
+          </button>
+        </div>
+        <div class="p-6 space-y-4">
+          <p class="text-sm text-gray-600">
+            Sélectionnez le format du rapport d'activité à télécharger.
+          </p>
+          <div class="grid grid-cols-2 gap-4">
+            <button (click)="simulerTelechargement('PDF')" 
+                    [disabled]="enTelechargement()"
+                    class="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-colors disabled:opacity-50">
+              <mat-icon class="text-red-500 mb-2" style="font-size: 32px; width: 32px; height: 32px;">picture_as_pdf</mat-icon>
+              <span class="text-sm font-medium text-gray-900">Format PDF</span>
+            </button>
+            <button (click)="simulerTelechargement('Excel')" 
+                    [disabled]="enTelechargement()"
+                    class="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-colors disabled:opacity-50">
+              <mat-icon class="text-green-500 mb-2" style="font-size: 32px; width: 32px; height: 32px;">table_view</mat-icon>
+              <span class="text-sm font-medium text-gray-900">Format Excel</span>
+            </button>
+          </div>
+          @if (enTelechargement()) {
+            <div class="mt-4 p-3 bg-blue-50 text-blue-700 rounded-lg text-sm flex items-center gap-2">
+              <mat-icon class="animate-spin" style="font-size: 18px; width: 18px; height: 18px;">autorenew</mat-icon>
+              Génération du rapport en cours...
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</div>

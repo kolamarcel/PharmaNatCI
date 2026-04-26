@@ -1,0 +1,358 @@
+<div class="max-w-7xl mx-auto space-y-6 relative">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Mouvements de Stock</h1>
+      <p class="text-sm text-gray-500 mt-1">Traçabilité des entrées, sorties et destructions (Règle FEFO)</p>
+    </div>
+    <div class="flex gap-2">
+      @if (serviceAuthentification.aPermission('creer_mouvement')) {
+        <button (click)="ouvrirModale('sortie')" 
+                [disabled]="estEnChargement()"
+                [class.btn-loading]="estEnChargement()"
+                class="inline-flex items-center gap-2 px-4 py-2 bg-red-50 text-red-700 border border-red-200 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors shadow-sm">
+          <mat-icon class="material-icons-outlined text-sm" style="font-size: 18px; width: 18px; height: 18px;">remove_circle_outline</mat-icon>
+          Nouvelle Sortie
+        </button>
+        <button (click)="ouvrirModale('entree')" 
+                [disabled]="estEnChargement()"
+                [class.btn-loading]="estEnChargement()"
+                class="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors shadow-sm">
+          <mat-icon class="material-icons-outlined text-sm" style="font-size: 18px; width: 18px; height: 18px;">add_circle_outline</mat-icon>
+          Nouvelle Entrée
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Navigation Hiérarchique -->
+  <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm space-y-4">
+    <nav class="flex items-center text-sm text-gray-500 overflow-x-auto whitespace-nowrap pb-2 sm:pb-0">
+      <button (click)="allerAEtablissement(serviceAuthentification.utilisateurActuel()?.etablissementId || null)" 
+              class="hover:text-primary-600 flex items-center">
+        <mat-icon class="text-sm mr-1">home</mat-icon> Racine
+      </button>
+      @for (etab of cheminNavigation(); track etab.id) {
+        <mat-icon class="text-xs mx-2">chevron_right</mat-icon>
+        <button (click)="allerAEtablissement(etab.id)" 
+                [class.text-primary-600]="etab.id === etablissementActuelId()"
+                [class.font-bold]="etab.id === etablissementActuelId()"
+                class="hover:text-primary-600">
+          {{ etab.nom }}
+        </button>
+      }
+    </nav>
+
+    @if (sousEtablissements().length > 0) {
+      <div class="pt-2 border-t border-gray-100">
+        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+          {{ etablissementActuel()?.type === 'NATIONAL' ? 'Régions' : 'Pharmacies' }}
+        </p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+          @for (sous of sousEtablissements(); track sous.id) {
+            <button (click)="allerAEtablissement(sous.id)" 
+                    class="flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:border-primary-300 hover:bg-primary-50 transition-all text-left group">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded bg-gray-100 flex items-center justify-center text-gray-500 group-hover:bg-primary-100 group-hover:text-primary-600">
+                  <mat-icon class="text-sm">{{ sous.type === 'REGION' ? 'location_city' : 'local_pharmacy' }}</mat-icon>
+                </div>
+                <span class="text-sm font-medium text-gray-700 group-hover:text-primary-700">{{ sous.nom }}</span>
+              </div>
+              <mat-icon class="text-gray-300 group-hover:text-primary-400">chevron_right</mat-icon>
+            </button>
+          }
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Onglets -->
+  <div class="border-b border-gray-200">
+    <nav class="-mb-px flex space-x-8">
+      <a href="javascript:void(0)" (click)="ongletActif.set('tous')" [class.border-primary-500]="ongletActif() === 'tous'" [class.text-primary-600]="ongletActif() === 'tous'" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+        Tous les mouvements
+      </a>
+      <a href="javascript:void(0)" (click)="ongletActif.set('en_attente')" [class.border-primary-500]="ongletActif() === 'en_attente'" [class.text-primary-600]="ongletActif() === 'en_attente'" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2">
+        À valider
+        @if (nombreEnAttente() > 0) {
+          <span class="bg-orange-100 text-orange-600 py-0.5 px-2 rounded-full text-xs">{{ nombreEnAttente() }}</span>
+        }
+      </a>
+    </nav>
+  </div>
+
+  <!-- Filtres -->
+  <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col sm:flex-row gap-4">
+    <div class="flex-1 relative">
+      <mat-icon class="material-icons-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</mat-icon>
+      <input type="text" [(ngModel)]="requeteRecherche" placeholder="Rechercher par médicament, lot, agent..." 
+             class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all text-sm">
+    </div>
+    <div class="flex gap-2">
+      <select [(ngModel)]="typeSelectionne" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 outline-none bg-white">
+        <option value="">Tous les types</option>
+        <option value="Réception Commande">Réception Commande</option>
+        <option value="Livraison Commande">Livraison Commande</option>
+        <option value="Transfert Reçu">Transfert Reçu</option>
+        <option value="Transfert Envoyé">Transfert Envoyé</option>
+        <option value="Ordonnance">Ordonnance</option>
+        <option value="Service Interne">Service Interne</option>
+        <option value="Destruction">Destruction</option>
+        <option value="ENTREE">Entrée simple</option>
+        <option value="SORTIE">Sortie simple</option>
+      </select>
+      <input type="date" [(ngModel)]="dateSelectionnee" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 outline-none bg-white">
+    </div>
+  </div>
+
+  <!-- Tableau des mouvements -->
+  <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date & Heure</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Médicament & Lot</th>
+            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Quantité</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Auteur / Statut</th>
+            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          @for (mov of mouvementsPagines(); track mov.id) {
+            <tr class="hover:bg-gray-50 transition-colors">
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                {{ mov.date }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium"
+                      [class.bg-green-50]="mov.direction === 'entree'"
+                      [class.text-green-700]="mov.direction === 'entree'"
+                      [class.bg-gray-100]="mov.direction === 'sortie'"
+                      [class.text-gray-700]="mov.direction === 'sortie'"
+                      [class.bg-red-50]="mov.direction === 'destruction'"
+                      [class.text-red-700]="mov.direction === 'destruction'">
+                  <mat-icon class="material-icons-outlined" style="font-size: 14px; width: 14px; height: 14px;">
+                    {{ mov.direction === 'entree' ? 'arrow_downward' : (mov.direction === 'destruction' ? 'delete' : 'arrow_upward') }}
+                  </mat-icon>
+                  {{ mov.type }}
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex flex-col">
+                  <span class="text-sm font-medium text-gray-900">{{ mov.nomMedicament }}</span>
+                  <span class="text-xs text-gray-500">Lot: <span class="font-mono">{{ mov.lot }}</span></span>
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-right">
+                <span class="text-sm font-bold" 
+                      [class.text-green-600]="mov.direction === 'entree'"
+                      [class.text-gray-900]="mov.direction !== 'entree'">
+                  {{ mov.direction === 'entree' ? '+' : '-' }}{{ mov.quantite }}
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex flex-col">
+                  <span class="text-sm text-gray-900">{{ mov.auteur }}</span>
+                  @if (mov.statut === 'en_attente') {
+                    <span class="text-xs font-medium text-orange-600">En attente validation</span>
+                  } @else if (mov.statut === 'rejete') {
+                    <span class="text-xs font-medium text-red-600">Rejeté</span>
+                  } @else {
+                    <span class="text-xs text-green-600 flex items-center gap-1">
+                      <mat-icon class="material-icons-outlined" style="font-size: 12px; width: 12px; height: 12px;">check_circle</mat-icon>
+                      Validé
+                    </span>
+                  }
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                @if (mov.statut === 'en_attente' && peutValider()) {
+                  <button (click)="valider(mov.id)" class="text-primary-600 hover:text-primary-900 p-1" title="Valider">
+                    <mat-icon class="material-icons-outlined" style="font-size: 20px; width: 20px; height: 20px;">check</mat-icon>
+                  </button>
+                  <button (click)="rejeter(mov.id)" class="text-red-600 hover:text-red-900 p-1 ml-1" title="Rejeter">
+                    <mat-icon class="material-icons-outlined" style="font-size: 20px; width: 20px; height: 20px;">close</mat-icon>
+                  </button>
+                } @else {
+                  <button (click)="voirDetails(mov)" class="text-gray-400 hover:text-gray-600 p-1" title="Détails">
+                    <mat-icon class="material-icons-outlined" style="font-size: 20px; width: 20px; height: 20px;">visibility</mat-icon>
+                  </button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <div class="px-6 py-3 border-t border-gray-200 bg-gray-50 flex items-center justify-between">
+      <span class="text-sm text-gray-500">Affichage de {{ (pageActuelle() - 1) * elementsParPage + 1 }} à {{ Math.min(pageActuelle() * elementsParPage, mouvementsFiltres().length) }} sur {{ mouvementsFiltres().length }} mouvements</span>
+      <div class="flex gap-1">
+        <button (click)="pagePrecedente()" [disabled]="pageActuelle() === 1" class="px-3 py-1 border border-gray-300 rounded bg-white text-gray-500 hover:bg-gray-50 disabled:opacity-50">Précédent</button>
+        <button (click)="pageSuivante()" [disabled]="pageActuelle() === totalPages() || totalPages() === 0" class="px-3 py-1 border border-gray-300 rounded bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50">Suivant</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modale de détails -->
+  @if (afficherModaleDetails()) {
+    <div class="fixed inset-0 bg-gray-900/50 z-50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+          <h3 class="text-lg font-bold text-gray-900">Détails du Mouvement</h3>
+          <button (click)="fermerModaleDetails()" class="text-gray-400 hover:text-gray-600">
+            <mat-icon class="material-icons-outlined">close</mat-icon>
+          </button>
+        </div>
+        <div class="p-6 space-y-4">
+          <div class="flex justify-between border-b pb-2">
+            <span class="text-gray-600">Date:</span>
+            <span class="font-medium">{{ elementSelectionne()?.date }}</span>
+          </div>
+          <div class="flex justify-between border-b pb-2">
+            <span class="text-gray-600">Type:</span>
+            <span class="font-medium">{{ elementSelectionne()?.type }}</span>
+          </div>
+          <div class="flex justify-between border-b pb-2">
+            <span class="text-gray-600">Médicament:</span>
+            <span class="font-medium">{{ elementSelectionne()?.nomMedicament }}</span>
+          </div>
+          <div class="flex justify-between border-b pb-2">
+            <span class="text-gray-600">Lot:</span>
+            <span class="font-medium">{{ elementSelectionne()?.lot }}</span>
+          </div>
+          <div class="flex justify-between border-b pb-2">
+            <span class="text-gray-600">Quantité:</span>
+            <span class="font-medium">{{ elementSelectionne()?.quantite }}</span>
+          </div>
+          <div class="flex justify-between border-b pb-2">
+            <span class="text-gray-600">Auteur:</span>
+            <span class="font-medium">{{ elementSelectionne()?.auteur }}</span>
+          </div>
+          <div class="flex justify-between pb-2">
+            <span class="text-gray-600">Statut:</span>
+            <span class="font-medium">{{ elementSelectionne()?.statut }}</span>
+          </div>
+          <div class="pt-4 flex justify-end">
+            <button (click)="fermerModaleDetails()" class="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700">Fermer</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Modale d'ajout -->
+  @if (afficherModale()) {
+    <div class="fixed inset-0 bg-gray-900/50 z-50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-xl shadow-xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]">
+        <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-white sticky top-0 z-10">
+          <h3 class="text-lg font-bold text-gray-900">
+            {{ directionModale() === 'entree' ? 'Nouvelle Entrée Groupée' : 'Nouvelle Sortie Groupée' }}
+          </h3>
+          <button (click)="fermerModale()" class="text-gray-400 hover:text-gray-600">
+            <mat-icon class="material-icons-outlined">close</mat-icon>
+          </button>
+        </div>
+        
+        <form (submit)="soumettreMouvement($event)" class="flex-1 overflow-y-auto p-6 space-y-6">
+          @if (messageErreur()) {
+            <div class="p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3 text-red-700 text-sm animate-pulse">
+              <mat-icon class="material-icons-outlined">error_outline</mat-icon>
+              {{ messageErreur() }}
+            </div>
+          }
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label for="typeMouvementModale" class="block text-sm font-medium text-gray-700 mb-1">Type de mouvement</label>
+              <select id="typeMouvementModale" name="typeMouvementModale" [(ngModel)]="typeMouvementModale" required class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 border p-2">
+                @if (directionModale() === 'entree') {
+                  <option value="Réception PSP">Réception PSP</option>
+                  <option value="Transfert Reçu">Transfert Reçu</option>
+                  <option value="Retour Fournisseur">Retour Fournisseur</option>
+                  <option value="ENTREE">Entrée simple</option>
+                } @else {
+                  <option value="Ordonnance">Ordonnance</option>
+                  <option value="Service Interne">Service Interne</option>
+                  <option value="Destruction">Destruction</option>
+                  <option value="Péremption">Péremption</option>
+                  <option value="SORTIE">Sortie simple</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <div class="space-y-4">
+            <div class="flex items-center justify-between">
+              <h4 class="text-sm font-bold text-gray-900 uppercase tracking-wider">Articles</h4>
+              <button type="button" (click)="ajouterLigne()" class="text-sm text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1">
+                <mat-icon class="text-sm" style="font-size: 16px; width: 16px; height: 16px;">add</mat-icon>
+                Ajouter un médicament
+              </button>
+            </div>
+
+            <div class="relative w-full">
+              <mat-icon class="material-icons-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</mat-icon>
+              <input type="text" [(ngModel)]="rechercheMedicament" name="rechercheMedicament" placeholder="Filtrer la liste des médicaments..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all text-sm">
+            </div>
+
+            <div class="space-y-3">
+              @for (ligne of lignesMouvement(); track $index) {
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-3 p-4 bg-gray-50 rounded-xl border border-gray-200 relative group">
+                  <div class="md:col-span-4">
+                    <label [for]="'med-' + $index" class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Médicament</label>
+                    <select [id]="'med-' + $index" [name]="'med-' + $index" [(ngModel)]="ligne.idMedicament" (change)="ligne.numeroLot = ''" required class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 border p-2 text-sm bg-white">
+                      @for (med of medicamentsFiltres(); track med.id) {
+                        <option [value]="med.id">{{ med.dci }} ({{ med.nomCommercial }})</option>
+                      }
+                    </select>
+                  </div>
+                  <div class="md:col-span-4">
+                    <label [for]="'lot-' + $index" class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Lot / Stock</label>
+                    
+                    @if (directionModale() === 'entree') {
+                      <input [id]="'lot-' + $index" [name]="'lot-' + $index" [(ngModel)]="ligne.numeroLot" [attr.list]="'lots-' + $index" required class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 border p-2 text-sm bg-white font-mono" placeholder="Saisir ou choisir">
+                      <datalist [id]="'lots-' + $index">
+                        @for (lot of getLotsPourMedicament(ligne.idMedicament); track lot.id) {
+                          <option [value]="lot.numeroLot">Stock: {{ lot.stockAcutel }}</option>
+                        }
+                      </datalist>
+                    } @else {
+                      <select [id]="'lot-' + $index" [name]="'lot-' + $index" [(ngModel)]="ligne.numeroLot" required class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 border p-2 text-sm bg-white font-mono">
+                        <option value="">-- Choisir --</option>
+                        @for (lot of getLotsPourMedicament(ligne.idMedicament); track lot.id) {
+                          <option [value]="lot.numeroLot" [disabled]="lot.stockAcutel <= 0">
+                            {{ lot.numeroLot }} (Stock: {{ lot.stockAcutel }})
+                          </option>
+                        }
+                      </select>
+                    }
+                  </div>
+                  <div class="md:col-span-3">
+                    <label [for]="'qte-' + $index" class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Quantité</label>
+                    <input type="number" [id]="'qte-' + $index" [name]="'qte-' + $index" [(ngModel)]="ligne.quantite" required min="1" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 border p-2 text-sm font-bold bg-white">
+                  </div>
+                  <div class="md:col-span-1 flex items-end justify-center pb-1">
+                    <button type="button" (click)="supprimerLigne($index)" [disabled]="lignesMouvement().length === 1" class="text-gray-400 hover:text-red-600 disabled:opacity-30 transition-colors">
+                      <mat-icon class="material-icons-outlined">delete_outline</mat-icon>
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+
+          <div class="pt-6 border-t border-gray-200 flex justify-end gap-3 bg-white sticky bottom-0 z-10">
+            <button type="button" (click)="fermerModale()" [disabled]="estEnChargement()" class="px-6 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">Annuler</button>
+            <button type="submit" 
+              [disabled]="estEnChargement()"
+              [class.btn-loading]="estEnChargement()"
+              class="px-6 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 shadow-md transition-all min-w-[140px]">
+              Valider les {{ lignesMouvement().length }} mouvements
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>
