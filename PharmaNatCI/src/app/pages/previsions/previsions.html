@@ -1,0 +1,229 @@
+<div class="space-y-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="text-2xl font-bold tracking-tight text-slate-900">Prévisions de la Demande (IA)</h2>
+      <p class="text-sm text-slate-500 mt-1">Anticipez les besoins grâce à l'analyse prédictive basée sur l'historique et la saisonnalité.</p>
+    </div>
+    <div class="flex gap-3">
+      <button (click)="actualiserModele()" 
+              [disabled]="estEnChargement()"
+              [class.btn-loading]="estEnChargement()"
+              class="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors shadow-sm">
+        <mat-icon class="text-[18px]">auto_awesome</mat-icon>
+        Actualiser le Modèle
+      </button>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    @for (prev of previsionsFiltrees(); track prev.id) {
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+        <div class="flex items-start justify-between mb-6">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center">
+              <mat-icon class="text-indigo-600">insights</mat-icon>
+            </div>
+            <div>
+              <h3 class="font-bold text-slate-900 text-lg">{{ prev.medicamentNom }}</h3>
+              <p class="text-sm text-slate-500">Prévision pour {{ prev.mois }}</p>
+            </div>
+          </div>
+          <div class="text-right">
+            <div class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold">
+              <mat-icon class="text-[14px]">check_circle</mat-icon>
+              Confiance: {{ prev.confiance }}%
+            </div>
+          </div>
+        </div>
+
+        <div class="mb-6">
+          <p class="text-sm text-slate-500 mb-1">Demande estimée</p>
+          <div class="flex items-end gap-2">
+            <span class="text-4xl font-black text-slate-900 tracking-tight">{{ prev.demandePrevue }}</span>
+            <span class="text-sm font-medium text-slate-500 mb-1">unités</span>
+          </div>
+        </div>
+
+        <div class="bg-slate-50 rounded-lg p-4 border border-slate-100">
+          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Facteurs d'influence clés</p>
+          <ul class="space-y-2">
+            @for (facteur of prev.facteurs; track facteur) {
+              <li class="flex items-center gap-2 text-sm text-slate-700">
+                <mat-icon class="text-indigo-400 text-[16px]">psychology</mat-icon>
+                {{ facteur }}
+              </li>
+            }
+          </ul>
+        </div>
+        
+        <div class="mt-4 flex gap-2">
+          <button (click)="ouvrirDetails(prev)" class="flex-1 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors">
+            Détails
+          </button>
+          @if (serviceAuthentification.aPermission('creer_commande')) {
+            <button (click)="genererCommande(prev.medicamentId, prev.demandePrevue)" 
+                    [disabled]="estEnChargement()"
+                    [class.btn-loading]="estEnChargement()"
+                    class="flex-1 py-2 bg-slate-900 text-white rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors">
+              Générer Commande
+            </button>
+          }
+        </div>
+      </div>
+    }
+  </div>
+</div>
+
+<!-- Modal Détails Prévision -->
+@if (previsionSelectionnee(); as p) {
+  <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden max-h-[90vh] flex flex-col">
+      <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-indigo-600 text-white">
+        <div class="flex items-center gap-3">
+          <mat-icon>analytics</mat-icon>
+          <h3 class="text-xl font-bold">Détails de l'Analyse Prédictive</h3>
+        </div>
+        <button (click)="fermerDetails()" class="text-white/80 hover:text-white transition-colors">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="p-6 overflow-y-auto space-y-8">
+        <!-- En-tête Médicament -->
+        <div class="flex items-center justify-between">
+          <div>
+            <h4 class="text-2xl font-bold text-slate-900">{{ p.medicamentNom }}</h4>
+            <p class="text-slate-500">Période d'analyse : {{ p.mois }}</p>
+          </div>
+          <div class="px-4 py-2 bg-indigo-50 text-indigo-700 rounded-xl font-bold border border-indigo-100">
+            Confiance : {{ p.confiance }}%
+          </div>
+        </div>
+
+        <!-- Grille de stats -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Demande Prévue</p>
+            <p class="text-3xl font-black text-indigo-600">{{ p.demandePrevue }} <span class="text-sm font-medium">unités</span></p>
+          </div>
+          <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Stock Actuel</p>
+            <p class="text-3xl font-black text-slate-700">{{ p.stockActuelCalcule }} <span class="text-sm font-medium">unités</span></p>
+          </div>
+        </div>
+
+        <!-- Alerte Rupture -->
+        @if (p.risqueRupture) {
+          <div class="p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-4 animate-pulse">
+            <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center text-red-600 shrink-0">
+              <mat-icon>warning</mat-icon>
+            </div>
+            <div>
+              <p class="font-bold text-red-900">Risque de rupture détecté !</p>
+              <p class="text-sm text-red-700">Rupture estimée le : {{ p.dateRuptureEstimee | date:'dd/MM/yyyy' }}</p>
+            </div>
+          </div>
+        } @else {
+          <div class="p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-4">
+            <div class="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
+              <mat-icon>check_circle</mat-icon>
+            </div>
+            <div>
+              <p class="font-bold text-emerald-900">Stock sécurisé</p>
+              <p class="text-sm text-emerald-700">Aucun risque de rupture identifié pour les 30 prochains jours.</p>
+            </div>
+          </div>
+        }
+
+        <!-- Recommandations -->
+        <div class="space-y-4">
+          <h5 class="font-bold text-slate-900 flex items-center gap-2">
+            <mat-icon class="text-indigo-600">lightbulb</mat-icon>
+            Recommandations de l'IA
+          </h5>
+          
+          <div class="grid grid-cols-1 gap-3">
+            @if (p.recommandationTransfert) {
+              <div class="p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-center justify-between">
+                <div>
+                  <p class="font-bold text-amber-900">Transfert possible</p>
+                  <p class="text-sm text-amber-700">L'établissement source suggéré est : {{ p.etablissementSourceTransfertId || 'Chargement...' }}</p>
+                </div>
+                <button class="px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium">Lancer Demande</button>
+              </div>
+            }
+
+            @if (p.recommandationCommande) {
+              <div class="p-4 bg-indigo-50 border border-indigo-200 rounded-xl">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="font-bold text-indigo-900">Commande recommandée</p>
+                    <p class="text-sm text-indigo-700">Quantité suggérée : <span class="font-bold">{{ p.quantiteCommandeRecommandee }} unités</span></p>
+                  </div>
+                  <button (click)="genererCommande(p.medicamentId, p.quantiteCommandeRecommandee)"
+                          class="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700 transition-colors shadow-sm">
+                    <mat-icon style="font-size: 18px; width: 18px; height: 18px;">shopping_cart</mat-icon>
+                    Créer la commande
+                  </button>
+                </div>
+                <p class="text-xs text-indigo-500 mt-2 flex items-center gap-1">
+                  <mat-icon style="font-size: 14px; width: 14px; height: 14px;">open_in_new</mat-icon>
+                  Vous serez redirigé vers le formulaire de commande avec les champs pré-remplis.
+                </p>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Facteurs -->
+        <div class="space-y-3">
+          <h5 class="text-sm font-bold text-slate-400 uppercase tracking-widest">Facteurs d'influence analysés</h5>
+          <div class="flex flex-wrap gap-2">
+            @for (f of p.facteurs; track f) {
+              <span class="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-medium">{{ f }}</span>
+            }
+          </div>
+        </div>
+      </div>
+
+      <div class="px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
+        <button (click)="fermerDetails()" class="px-6 py-2 text-slate-600 font-medium hover:bg-slate-200 rounded-lg transition-colors">
+          Fermer
+        </button>
+        <button (click)="genererCommande(p.medicamentId, p.demandePrevue)" 
+                class="px-6 py-2 bg-slate-900 text-white font-medium rounded-lg hover:bg-slate-800 transition-colors">
+          Générer Commande Globale
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal de Confirmation -->
+@if (confirmationVisible()) {
+  <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+      <div class="p-6">
+        <div class="flex items-start gap-4">
+          <div class="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 shrink-0">
+            <mat-icon>help_outline</mat-icon>
+          </div>
+          <div class="flex-1">
+            <h3 class="text-lg font-bold text-slate-900 mb-1">Confirmer l'action</h3>
+            <p class="text-slate-600 text-sm leading-relaxed">{{ confirmationMessage() }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-3">
+        <button (click)="annulerAction()"
+                class="px-5 py-2 text-sm font-semibold text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-100 transition-colors">
+          Annuler
+        </button>
+        <button (click)="confirmerAction()"
+                class="px-5 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-colors shadow-sm">
+          Confirmer
+        </button>
+      </div>
+    </div>
+  </div>
+}
