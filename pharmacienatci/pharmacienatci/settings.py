@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -80,21 +81,21 @@ WSGI_APPLICATION = 'pharmacienatci.wsgi.application'
 
 
 # Database
-# https://docs.djangoproject.com/en/6.0/ref/settings/#databases
+# Configurer la connexion via DATABASE_URL dans .env
+# MySQL      : mysql://USER:PASSWORD@HOST:PORT/NOM_BD
+# PostgreSQL : postgresql://USER:PASSWORD@HOST:PORT/NOM_BD
 
 DATABASES = {
-    'default': {
-        'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.mysql'),
-        'NAME': os.getenv('DB_NAME', 'pharmacienatci'),
-        'USER': os.getenv('DB_USER', 'root'),
-        'PASSWORD': os.getenv('DB_PASSWORD', ''),
-        'HOST': os.getenv('DB_HOST', '127.0.0.1'),
-        'PORT': os.getenv('DB_PORT', '3306'),
-        'OPTIONS': {
-            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-        },
-    }
+    'default': dj_database_url.config(
+        env='DATABASE_URL',
+        default='mysql://root:@127.0.0.1:3306/pharmacienatci',
+    )
 }
+
+# Option spécifique MySQL : mode strict pour éviter les insertions silencieuses
+if 'mysql' in DATABASES['default'].get('ENGINE', ''):
+    DATABASES['default'].setdefault('OPTIONS', {})
+    DATABASES['default']['OPTIONS']['init_command'] = "SET sql_mode='STRICT_TRANS_TABLES'"
 
 
 # Password validation

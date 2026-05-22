@@ -1,0 +1,67 @@
+# ──────────────────────────────────────────
+# Django / Python
+# ──────────────────────────────────────────
+pharmacienatci/venv/
+pharmacienatci/__pycache__/
+pharmacienatci/**/__pycache__/
+pharmacienatci/**/*.pyc
+pharmacienatci/**/*.pyo
+pharmacienatci/*.pyc
+
+# Base de données locale
+pharmacienatci/db.sqlite3
+
+# Variables d'environnement (contient les accès BD)
+pharmacienatci/.env
+
+# Fichiers uploadés par les utilisateurs
+pharmacienatci/media/
+
+# Fichiers statiques collectés (généré par collectstatic)
+pharmacienatci/staticfiles/
+
+# Modèles ML entraînés (fichiers binaires volumineux)
+pharmacienatci/**/*.pkl
+pharmacienatci/**/*.joblib
+
+# ──────────────────────────────────────────
+# Angular / Node
+# ──────────────────────────────────────────
+PharmaNatCI/node_modules/
+PharmaNatCI/dist/
+PharmaNatCI/.angular/
+PharmaNatCI/coverage/
+PharmaNatCI/tmp/
+PharmaNatCI/out-tsc/
+
+# ──────────────────────────────────────────
+# IDEs et éditeurs
+# ──────────────────────────────────────────
+.vscode/
+.idea/
+*.iml
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.project
+.classpath
+.settings/
+*.sublime-workspace
+*.sublime-project
+
+# ──────────────────────────────────────────
+# Système d'exploitation
+# ──────────────────────────────────────────
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ──────────────────────────────────────────
+# Logs
+# ──────────────────────────────────────────
+*.log
+npm-debug.log*
+yarn-error.log*
+pip-log.txt
