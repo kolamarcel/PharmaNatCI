@@ -24,6 +24,10 @@ export class TableauDeBordComposant {
   serviceUi = inject(ServiceUi);
   router = inject(Router);
 
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 472cd0d8fbf1901c90d654f35050fbce51666f13
   afficherModaleRapport = signal(false);
   enTelechargement = signal(false);
   estPleinEcran = signal(false);
@@ -46,6 +50,15 @@ export class TableauDeBordComposant {
       this.serviceUi.afficherToast(`Rapport ${format} généré et téléchargé.`, 'succes');
     }, 1500);
   }
+<<<<<<< HEAD
+=======
+=======
+  estPleinEcran = signal(false);
+  estEnChargement = signal(false);
+
+
+>>>>>>> 1a8a7c0 (2e commit)
+>>>>>>> 472cd0d8fbf1901c90d654f35050fbce51666f13
 
   basculerPleinEcran() {
     this.estPleinEcran.update((v: boolean) => !v);

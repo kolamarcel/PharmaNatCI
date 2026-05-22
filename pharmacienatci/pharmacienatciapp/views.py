@@ -1080,6 +1080,10 @@ def api_dashboard_stats(request):
 
     alertes = sorted(alertes, key=lambda x: x['stock'])[:5]
     
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 472cd0d8fbf1901c90d654f35050fbce51666f13
     # 2. Transferts Stats
     transferts_all = Transfert.objects.filter(
         Q(etablissementOrigine_id=etab_id) | Q(etablissementDestination_id=etab_id)
@@ -1087,6 +1091,32 @@ def api_dashboard_stats(request):
     en_attente = transferts_all.filter(statut='En attente').count()
     valides = transferts_all.filter(statut__in=['Validé', 'Livre', 'Livré', 'Validite']).count()
     rejetes = transferts_all.filter(statut='Rejeté').count()
+<<<<<<< HEAD
+=======
+=======
+    # 2. Transferts Stats — inclure les sous-établissements pour la vue nationale
+    etab_ids = [etab_id]
+    try:
+        etab_obj = Etablissement.objects.get(pk=etab_id)
+        if etab_obj.type in ('NATIONAL', 'REGION'):
+            descendants = list(Etablissement.objects.filter(parent_id=etab_id).values_list('id', flat=True))
+            etab_ids.extend(descendants)
+            # Niveau 2 (pharmacies sous les régions)
+            if etab_obj.type == 'NATIONAL':
+                for d_id in descendants:
+                    sous = list(Etablissement.objects.filter(parent_id=d_id).values_list('id', flat=True))
+                    etab_ids.extend(sous)
+    except Etablissement.DoesNotExist:
+        pass
+
+    transferts_all = Transfert.objects.filter(
+        Q(etablissementOrigine_id__in=etab_ids) | Q(etablissementDestination_id__in=etab_ids)
+    )
+    en_attente = transferts_all.filter(statut__in=['En attente', 'Pending']).count()
+    valides = transferts_all.filter(statut__in=['Validé', 'Livre', 'Livré', 'Validite', 'Transféré', 'Expédié', 'Reçu']).count()
+    rejetes = transferts_all.filter(statut__in=['Rejeté', 'Annulé']).count()
+>>>>>>> 1a8a7c0 (2e commit)
+>>>>>>> 472cd0d8fbf1901c90d654f35050fbce51666f13
     
     # 3. Mouvements récents
     mouvements_recents = Mouvement.objects.filter(etablissement_id=etab_id).order_by('-dateMouvement')[:5]

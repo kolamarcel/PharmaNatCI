@@ -6,6 +6,13 @@ import { ServiceDonnees } from '../../services/service-donnees';
 import { ServiceFiltrage } from '../../services/service-filtrage';
 import { StockEtablissementView } from '../../interface/donnees';
 import * as L from 'leaflet';
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+=======
+import { environment } from '../../../environments/environment';
+>>>>>>> 1a8a7c0 (2e commit)
+>>>>>>> 472cd0d8fbf1901c90d654f35050fbce51666f13
 
 @Component({
   selector: 'app-annuaire',
@@ -78,7 +85,15 @@ export class AnnuaireComposant {
     // Center on Côte d'Ivoire
     this.map = L.map(this.mapElement.nativeElement).setView([7.536064, -5.54708], 6);
 
+<<<<<<< HEAD
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+=======
+<<<<<<< HEAD
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+=======
+    L.tileLayer(environment.tileLayerUrl, {
+>>>>>>> 1a8a7c0 (2e commit)
+>>>>>>> 472cd0d8fbf1901c90d654f35050fbce51666f13
       attribution: '© OpenStreetMap contributors'
     }).addTo(this.map);
 

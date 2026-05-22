@@ -440,11 +440,73 @@ export class TransfertsComposant {
     };
 
     import('html2pdf.js').then((module: any) => {
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 472cd0d8fbf1901c90d654f35050fbce51666f13
       const generateur = module.default || module;
       generateur().set(opt).from(element).save();
     }).catch((err: any) => {
       console.error("Erreur téléchargement PDF:", err);
       alert("Une erreur s'est produite lors de la génération du PDF.");
+<<<<<<< HEAD
+=======
+=======
+      const originalGetComputedStyle = window.getComputedStyle;
+      const canvas = document.createElement('canvas');
+      canvas.width = 1;
+      canvas.height = 1;
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      
+      const safeColor = (val: any) => {
+        if (typeof val !== 'string') return val;
+        const hasModernColor = val.includes('oklch') || val.includes('oklab') || 
+                               val.includes('color(') || val.includes('color-mix') || 
+                               val.includes('lch(') || val.includes('lab(');
+        if (!hasModernColor) return val;
+        if (ctx) {
+          ctx.clearRect(0, 0, 1, 1);
+          ctx.fillStyle = val;
+          ctx.fillRect(0, 0, 1, 1);
+          const data = ctx.getImageData(0, 0, 1, 1).data;
+          if (data[3] > 0 || data[0] > 0 || data[1] > 0 || data[2] > 0) {
+            return `rgba(${data[0]}, ${data[1]}, ${data[2]}, ${data[3] / 255})`;
+          }
+        }
+        return 'rgba(200, 200, 200, 1)';
+      };
+
+      window.getComputedStyle = function(elt: Element, pseudoElt?: string | null) {
+        const style = originalGetComputedStyle.call(window, elt, pseudoElt);
+        return new Proxy(style, {
+          get(target: any, prop: string) {
+            const val = target[prop];
+            if (typeof val === 'function') {
+              if (prop === 'getPropertyValue') {
+                return function(propertyName: string) {
+                  return safeColor(target.getPropertyValue(propertyName));
+                };
+              }
+              return val.bind(target);
+            }
+            return safeColor(val);
+          }
+        });
+      };
+
+      const generateur = module.default || module;
+      generateur().set(opt).from(element).save().then(() => {
+        window.getComputedStyle = originalGetComputedStyle;
+      }).catch((err: any) => {
+        window.getComputedStyle = originalGetComputedStyle;
+        console.error("Erreur téléchargement PDF:", err);
+        alert("Une erreur s'est produite lors de la génération du PDF.");
+      });
+    }).catch((err: any) => {
+      console.error("Erreur import html2pdf:", err);
+      alert("Impossible de charger le module PDF.");
+>>>>>>> 1a8a7c0 (2e commit)
+>>>>>>> 472cd0d8fbf1901c90d654f35050fbce51666f13
     });
   }
 

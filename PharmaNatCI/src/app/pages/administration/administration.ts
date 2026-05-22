@@ -10,6 +10,13 @@ import { ServiceUi } from '../../services/service-ui';
 import { ServiceFiltrage } from '../../services/service-filtrage';
 import { Utilisateur, Medicament, Categorie, Etablissement, Region, Saison, Fournisseur } from '../../interface/donnees';
 import * as L from 'leaflet';
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+=======
+import { environment } from '../../../environments/environment';
+>>>>>>> 1a8a7c0 (2e commit)
+>>>>>>> 472cd0d8fbf1901c90d654f35050fbce51666f13
 
 @Component({
   selector: 'app-administration',
@@ -255,7 +262,15 @@ export class AdministrationComposant {
       markerZoomAnimation: false
     }).setView([latInit, lngInit], 6);
 
+<<<<<<< HEAD
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+=======
+<<<<<<< HEAD
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+=======
+    L.tileLayer(environment.tileLayerUrl, {
+>>>>>>> 1a8a7c0 (2e commit)
+>>>>>>> 472cd0d8fbf1901c90d654f35050fbce51666f13
       attribution: '© OpenStreetMap contributors',
       updateWhenIdle: true,
       keepBuffer: 2
@@ -298,7 +313,15 @@ export class AdministrationComposant {
       return;
     }
 
+<<<<<<< HEAD
     this.http.get<any[]>(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&countrycodes=ci&limit=5`).subscribe(results => {
+=======
+<<<<<<< HEAD
+    this.http.get<any[]>(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&countrycodes=ci&limit=5`).subscribe(results => {
+=======
+    this.http.get<any[]>(`${environment.nominatimUrl}?format=json&q=${encodeURIComponent(q)}&countrycodes=ci&limit=5`).subscribe(results => {
+>>>>>>> 1a8a7c0 (2e commit)
+>>>>>>> 472cd0d8fbf1901c90d654f35050fbce51666f13
       this.resultatsRechercheLieu.set(results || []);
 
       // Si l'utilisateur clique sur le bouton "Rechercher" ou appuie sur Entrée, on prend le premier résultat

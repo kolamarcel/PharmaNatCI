@@ -2,6 +2,13 @@ import { Injectable, signal, inject, computed, PLATFORM_ID } from '@angular/core
 import { isPlatformBrowser } from '@angular/common';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+=======
+import { environment } from '../../environments/environment';
+>>>>>>> 1a8a7c0 (2e commit)
+>>>>>>> 472cd0d8fbf1901c90d654f35050fbce51666f13
 import { Utilisateur, Role } from '../interface/donnees';
 import { ServiceDonnees } from './service-donnees';
 import { tap, firstValueFrom } from 'rxjs';
@@ -12,7 +19,15 @@ export class ServiceAuthentification {
   private routeur = inject(Router);
   private serviceDonnees = inject(ServiceDonnees);
   private platformId = inject(PLATFORM_ID);
+<<<<<<< HEAD
   private apiUrl = 'http://localhost:8000/api';
+=======
+<<<<<<< HEAD
+  private apiUrl = 'http://localhost:8000/api';
+=======
+  private apiUrl = environment.apiUrl;
+>>>>>>> 1a8a7c0 (2e commit)
+>>>>>>> 472cd0d8fbf1901c90d654f35050fbce51666f13
 
   utilisateurActuel = signal<Utilisateur | null>(null);
   

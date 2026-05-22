@@ -1,0 +1,307 @@
+{
+  "regions": [
+    {
+      "id": "reg1",
+      "nom": "Sud",
+      "code": "S"
+    },
+    {
+      "id": "reg2",
+      "nom": "Nord",
+      "code": "N"
+    },
+    {
+      "id": "reg3",
+      "nom": "Centre",
+      "code": "C"
+    }
+  ],
+  "etablissements": [
+    {
+      "id": "e1",
+      "nom": "Entrepôt National (PSP-CI)",
+      "type": "NATIONAL",
+      "regionId": "reg3",
+      "actif": true
+    },
+    {
+      "id": "e2",
+      "nom": "Entrepôt Régional Nord (Bouaké)",
+      "type": "REGION",
+      "regionId": "reg2",
+      "parentId": "e1",
+      "actif": true
+    },
+    {
+      "id": "e3",
+      "nom": "Entrepôt Régional Sud (Abidjan)",
+      "type": "REGION",
+      "regionId": "reg1",
+      "parentId": "e1",
+      "actif": true
+    },
+    {
+      "id": "e4",
+      "nom": "Pharmacie du Centre",
+      "type": "PHARMACIE",
+      "regionId": "reg2",
+      "parentId": "e2",
+      "actif": true
+    },
+    {
+      "id": "e5",
+      "nom": "Pharmacie de la Gare",
+      "type": "PHARMACIE",
+      "regionId": "reg2",
+      "parentId": "e2",
+      "actif": true
+    },
+    {
+      "id": "e6",
+      "nom": "Pharmacie Saint-Jean",
+      "type": "PHARMACIE",
+      "regionId": "reg1",
+      "parentId": "e3",
+      "actif": true
+    }
+  ],
+  "categories": [
+    {
+      "id": "c1",
+      "nom": "Antibiotiques",
+      "actif": true
+    },
+    {
+      "id": "c2",
+      "nom": "Analgésiques",
+      "actif": true
+    },
+    {
+      "id": "c3",
+      "nom": "Antipaludiques",
+      "actif": true
+    }
+  ],
+  "fournisseurs": [
+    {
+      "id": "f1",
+      "nom": "Laboratoire Alpha"
+    },
+    {
+      "id": "f2",
+      "nom": "Pharma Plus"
+    },
+    {
+      "id": "f3",
+      "nom": "Sanofi"
+    }
+  ],
+  "medicaments": [
+    {
+      "id": "m1",
+      "dci": "Amoxicilline",
+      "nomCommercial": "Amoxil",
+      "forme": "Gélule",
+      "dosage": "500mg",
+      "codeATC": "J01CA04",
+      "unite": "Boîte",
+      "seuilMin": 100,
+      "seuilAlerte": 20,
+      "categorieId": "c1",
+      "image": "https://picsum.photos/seed/amox/400/300",
+      "actif": true
+    },
+    {
+      "id": "m2",
+      "dci": "Paracétamol",
+      "nomCommercial": "Doliprane",
+      "forme": "Comprimé",
+      "dosage": "1g",
+      "codeATC": "N02BE01",
+      "unite": "Boîte",
+      "seuilMin": 200,
+      "seuilAlerte": 50,
+      "categorieId": "c2",
+      "image": "https://picsum.photos/seed/para/400/300",
+      "actif": true
+    },
+    {
+      "id": "m3",
+      "dci": "Artéméther + Luméfantrine",
+      "nomCommercial": "Coartem",
+      "forme": "Comprimé",
+      "dosage": "20mg/120mg",
+      "codeATC": "P01BF01",
+      "unite": "Plaquette",
+      "seuilMin": 150,
+      "seuilAlerte": 30,
+      "categorieId": "c3",
+      "image": "https://picsum.photos/seed/coartem/400/300",
+      "actif": true
+    }
+  ],
+  "lots": [
+    {
+      "id": "l1",
+      "medicamentId": "m1",
+      "numeroLot": "LOT-2024-001",
+      "fournisseurId": "f1",
+      "dateFabrication": "2024-01-01",
+      "datePeremption": "2026-01-01",
+      "statut": "actif"
+    },
+    {
+      "id": "l2",
+      "medicamentId": "m2",
+      "numeroLot": "LOT-2024-002",
+      "fournisseurId": "f2",
+      "dateFabrication": "2024-02-01",
+      "datePeremption": "2026-02-01",
+      "statut": "actif"
+    },
+    {
+      "id": "l3",
+      "medicamentId": "m3",
+      "numeroLot": "LOT-2024-003",
+      "fournisseurId": "f3",
+      "dateFabrication": "2024-03-01",
+      "datePeremption": "2026-03-01",
+      "statut": "actif"
+    }
+  ],
+  "mouvements": [
+    {
+      "id": "mv-init-1",
+      "etablissementId": "e1",
+      "medicamentId": "m1",
+      "lotId": "l1",
+      "typeMouvement": "ENTREE",
+      "quantite": 5000,
+      "dateMouvement": "2026-01-01T00:00:00.000Z",
+      "reference": "INIT-STOCK-NAT",
+      "auteurId": "Système",
+      "statut": "valide"
+    },
+    {
+      "id": "mv-init-2",
+      "etablissementId": "e1",
+      "medicamentId": "m2",
+      "lotId": "l2",
+      "typeMouvement": "ENTREE",
+      "quantite": 10000,
+      "dateMouvement": "2026-01-01T00:00:00.000Z",
+      "reference": "INIT-STOCK-NAT",
+      "auteurId": "Système",
+      "statut": "valide"
+    },
+    {
+      "id": "mv-init-3",
+      "etablissementId": "e2",
+      "medicamentId": "m1",
+      "lotId": "l1",
+      "typeMouvement": "ENTREE",
+      "quantite": 1000,
+      "dateMouvement": "2026-01-01T00:00:00.000Z",
+      "reference": "INIT-STOCK-REG",
+      "auteurId": "Système",
+      "statut": "valide"
+    }
+  ],
+  "commandes": [
+    {
+      "id": "CMD-1775130706949",
+      "etablissementId": "e3",
+      "fournisseurId": "e1",
+      "dateCreation": "2026-04-02T11:51:46.949Z",
+      "statut": "Envoyée PSP-CI",
+      "urgente": false,
+      "progression": 75
+    },
+    {
+      "id": "CMD-1775130002528",
+      "etablissementId": "e4",
+      "fournisseurId": "e2",
+      "dateCreation": "2026-04-02T11:40:02.528Z",
+      "statut": "Envoyée PSP-CI",
+      "urgente": false,
+      "progression": 75
+    }
+  ],
+  "lignesCommande": [],
+  "transferts": [],
+  "retours": [],
+  "previsions": [],
+  "utilisateurs": [
+    {
+      "id": "u1",
+      "nom": "Superviseur National",
+      "email": "national@sigl.ci",
+      "role": "superviseur_national",
+      "etablissementId": "e1",
+      "actif": true,
+      "matricule": "NAT001",
+      "motDePasse": "passer123"
+    },
+    {
+      "id": "u2",
+      "nom": "Pharmacien Régional Nord",
+      "email": "region.nord@sigl.ci",
+      "role": "pharmacien_region",
+      "etablissementId": "e2",
+      "actif": true,
+      "matricule": "REG001",
+      "motDePasse": "passer123"
+    },
+    {
+      "id": "u3",
+      "nom": "Pharmacien Régional Sud",
+      "email": "region.sud@sigl.ci",
+      "role": "pharmacien_region",
+      "etablissementId": "e3",
+      "actif": true,
+      "matricule": "REG002",
+      "motDePasse": "passer123"
+    },
+    {
+      "id": "u4",
+      "nom": "Pharmacien Titulaire Centre",
+      "email": "pharmacie.centre@sigl.ci",
+      "role": "pharmacien_pharmacie",
+      "etablissementId": "e4",
+      "actif": true,
+      "matricule": "PHA001",
+      "motDePasse": "passer123"
+    },
+    {
+      "id": "u5",
+      "nom": "Agent de Caisse Centre",
+      "email": "caisse.centre@sigl.ci",
+      "role": "agent_caisse",
+      "etablissementId": "e4",
+      "actif": true,
+      "matricule": "CAI001",
+      "motDePasse": "passer123"
+    },
+    {
+      "id": "u6",
+      "nom": "Admin Système",
+      "email": "admin@sigl.ci",
+      "role": "admin_central",
+      "etablissementId": null,
+      "actif": true,
+      "matricule": "ADM001",
+      "motDePasse": "passer123"
+    }
+  ],
+  "notifications": [
+    {
+      "id": "NOTIF-1775126834456",
+      "titre": "Modèle IA actualisé",
+      "message": "Le modèle de prévision a été mis à jour avec les dernières données.",
+      "date": "2026-04-02T10:47:14.456Z",
+      "lue": false,
+      "destinataireRole": "admin_central",
+      "destinataireId": "u6"
+    }
+  ]
+}

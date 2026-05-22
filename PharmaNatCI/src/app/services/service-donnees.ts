@@ -1,6 +1,13 @@
 import { Injectable, signal, computed, inject, PLATFORM_ID } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { isPlatformBrowser } from '@angular/common';
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+=======
+import { environment } from '../../environments/environment';
+>>>>>>> 1a8a7c0 (2e commit)
+>>>>>>> 472cd0d8fbf1901c90d654f35050fbce51666f13
 import {
   Medicament, Mouvement, Transfert, Commande,
   Etablissement, Categorie, Fournisseur, Lot, LigneCommande, Retour, Prevision, Utilisateur, Notification, Region, Role, DemandeTransfert, Saison
@@ -10,7 +17,15 @@ import {
 export class ServiceDonnees {
   private http = inject(HttpClient);
   private platformId = inject(PLATFORM_ID);
+<<<<<<< HEAD
   private apiUrl = 'http://localhost:8000/api';
+=======
+<<<<<<< HEAD
+  private apiUrl = 'http://localhost:8000/api';
+=======
+  private apiUrl = environment.apiUrl;
+>>>>>>> 1a8a7c0 (2e commit)
+>>>>>>> 472cd0d8fbf1901c90d654f35050fbce51666f13
   private httpOptions = { withCredentials: true };
 
   regions = signal<Region[]>([]);

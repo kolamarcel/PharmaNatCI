@@ -13,7 +13,10 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+<<<<<<< HEAD
 import dj_database_url
+=======
+>>>>>>> 472cd0d8fbf1901c90d654f35050fbce51666f13
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -37,6 +40,13 @@ ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 # Application definition
 
 INSTALLED_APPS = [
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+=======
+    'unfold',
+>>>>>>> 1a8a7c0 (2e commit)
+>>>>>>> 472cd0d8fbf1901c90d654f35050fbce51666f13
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -81,6 +91,7 @@ WSGI_APPLICATION = 'pharmacienatci.wsgi.application'
 
 
 # Database
+<<<<<<< HEAD
 # Configurer la connexion via DATABASE_URL dans .env
 # MySQL      : mysql://USER:PASSWORD@HOST:PORT/NOM_BD
 # PostgreSQL : postgresql://USER:PASSWORD@HOST:PORT/NOM_BD
@@ -97,6 +108,24 @@ if 'mysql' in DATABASES['default'].get('ENGINE', ''):
     DATABASES['default'].setdefault('OPTIONS', {})
     DATABASES['default']['OPTIONS']['init_command'] = "SET sql_mode='STRICT_TRANS_TABLES'"
 
+=======
+# https://docs.djangoproject.com/en/6.0/ref/settings/#databases
+
+DATABASES = {
+    'default': {
+        'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.mysql'),
+        'NAME': os.getenv('DB_NAME', 'pharmacienatci'),
+        'USER': os.getenv('DB_USER', 'root'),
+        'PASSWORD': os.getenv('DB_PASSWORD', ''),
+        'HOST': os.getenv('DB_HOST', '127.0.0.1'),
+        'PORT': os.getenv('DB_PORT', '3306'),
+        'OPTIONS': {
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+        },
+    }
+}
+
+>>>>>>> 472cd0d8fbf1901c90d654f35050fbce51666f13
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
@@ -179,3 +208,16 @@ CSRF_COOKIE_HTTPONLY = False  # Permet à Angular de lire le token CSRF pour les
 AUTH_USER_MODEL = 'pharmacienatciapp.Utilisateur'
 
 # Media files
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+=======
+
+UNFOLD = {
+    'SITE_TITLE': 'Administration NPSP-CI',
+    'SITE_HEADER': 'NPSP-CI',
+    'SITE_URL': '/',
+}
+
+>>>>>>> 1a8a7c0 (2e commit)
+>>>>>>> 472cd0d8fbf1901c90d654f35050fbce51666f13
