@@ -1,0 +1,139 @@
+<div class="flex h-screen bg-gray-50 overflow-hidden relative">
+  <!-- Overlay menu mobile -->
+  @if (menuMobileOuvert()) {
+    <div class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-30 md:hidden" (click)="fermerMenuMobile()" (keyup.enter)="fermerMenuMobile()" tabindex="0" role="button" aria-label="Fermer le menu"></div>
+  }
+
+  <!-- Barre latérale -->
+  <aside class="w-64 bg-white border-r border-gray-200 flex flex-col z-40 fixed inset-y-0 left-0 transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0"
+         [class.-translate-x-full]="!menuMobileOuvert()"
+         [class.translate-x-0]="menuMobileOuvert()">
+    <div class="h-16 flex items-center justify-between px-6 border-b border-gray-200">
+      <div class="flex items-center gap-2 text-primary-700">
+        <mat-icon class="material-icons-outlined">local_pharmacy</mat-icon>
+        <span class="text-xl font-bold tracking-tight">PharmaNat-CI</span>
+      </div>
+      <button class="md:hidden text-gray-400 hover:text-gray-600" (click)="fermerMenuMobile()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <div class="p-4 flex-1 overflow-y-auto">
+      <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2">Menu Principal</div>
+      <nav class="space-y-1">
+        @for (item of elementsMenuFiltres(); track item.chemin) {
+          <a [routerLink]="item.chemin" routerLinkActive="bg-primary-50 text-primary-700" 
+             (click)="fermerMenuMobile()"
+             class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors">
+            <mat-icon class="material-icons-outlined text-gray-500" [class.text-primary-600]="rla.isActive" #rla="routerLinkActive" routerLinkActive>{{ item.icone }}</mat-icon>
+            {{ item.libelle }}
+          </a>
+        }
+      </nav>
+    </div>
+
+    <div class="mt-auto p-4 border-t border-gray-200">
+      <div class="flex items-center gap-3 px-2">
+        <div class="w-8 h-8 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-bold text-sm uppercase flex-shrink-0">
+          {{ serviceAuthentification.utilisateurActuel()?.nom?.substring(0,2) }}
+        </div>
+        <div class="flex-col flex flex-1 min-w-0">
+          <span class="text-sm font-medium text-gray-900 truncate">{{ serviceAuthentification.utilisateurActuel()?.nom }}</span>
+          <span class="text-xs text-gray-500 truncate capitalize">{{ serviceAuthentification.libelleRole() }}</span>
+        </div>
+        <button (click)="deconnexion()" class="text-gray-400 hover:text-red-600 transition-colors p-1 flex-shrink-0" title="Déconnexion">
+          <mat-icon class="material-icons-outlined" style="font-size: 20px;">logout</mat-icon>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Contenu Principal -->
+  <div class="flex-1 flex flex-col min-w-0 overflow-hidden w-full">
+    <!-- En-tête -->
+    <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 sm:px-6 lg:px-8 z-10 flex-shrink-0">
+      <div class="flex items-center gap-4">
+        <button class="md:hidden text-gray-500 hover:text-gray-700 p-1" (click)="basculerMenuMobile()">
+          <mat-icon class="material-icons-outlined">menu</mat-icon>
+        </button>
+        
+        <div class="hidden sm:flex items-center gap-2 bg-gray-100 px-3 py-1.5 rounded-lg border border-gray-200">
+          <mat-icon class="material-icons-outlined text-gray-500 text-sm" style="font-size: 18px; width: 18px; height: 18px;">business</mat-icon>
+          <span class="text-sm font-medium text-gray-700">{{ serviceAuthentification.etablissementActuel()?.nom || 'Structure Inconnue' }}</span>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-4">
+        <!-- Menu déroulant des notifications -->
+        <div class="relative">
+          <button (click)="basculerNotifications()" class="text-gray-500 hover:text-gray-700 relative p-1 focus:outline-none">
+            <mat-icon class="material-icons-outlined">notifications</mat-icon>
+            @if (aDesNotificationsNonLues()) {
+              <span class="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+            }
+          </button>
+          
+          <!-- Panneau de notification -->
+          @if (afficherNotifications()) {
+            <div class="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-gray-200 z-50 overflow-hidden">
+              <div class="px-4 py-3 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                <h3 class="text-sm font-bold text-gray-900">Centre de notifications</h3>
+                <button (click)="effacerNotifications()" class="text-xs text-primary-600 hover:text-primary-700 font-medium">Tout marquer lu</button>
+              </div>
+              <div class="max-h-96 overflow-y-auto">
+                @for (notif of notifications(); track notif.id) {
+                  <div class="p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors relative"
+                       [class.bg-blue-50/30]="!notif.lue"
+                       (click)="!notif.lue ? serviceDonnees.marquerNotificationLue(notif.id) : null">
+                    @if (!notif.lue) {
+                      <div class="absolute left-0 top-0 bottom-0 w-1 bg-primary-500"></div>
+                    }
+                    <div class="flex gap-3">
+                      <div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-red-600 flex-shrink-0">
+                        <mat-icon class="material-icons-outlined" style="font-size: 16px;">warning</mat-icon>
+                      </div>
+                      <div>
+                        <p class="text-sm font-medium text-gray-900">{{ notif.titre }}</p>
+                        <p class="text-xs text-gray-600 mt-0.5">{{ notif.message }}</p>
+                        <p class="text-xs text-gray-400 mt-1">{{ notif.heure }}</p>
+                      </div>
+                    </div>
+                  </div>
+                }
+                @if (notifications().length === 0) {
+                  <div class="p-4 text-center text-gray-500 text-sm">
+                    Aucune nouvelle notification
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+        
+        <button routerLink="/parametres" class="text-gray-500 hover:text-gray-700 p-1">
+          <mat-icon class="material-icons-outlined">settings</mat-icon>
+        </button>
+      </div>
+    </header>
+
+    <!-- Zone de défilement principale -->
+    <main class="flex-1 overflow-y-auto bg-gray-50 p-4 sm:p-6 lg:p-8 relative" (click)="fermerNotifications()" (keydown.enter)="fermerNotifications()" tabindex="0">
+      
+      <!-- Chargement spécifique au contenu -->
+      @if (chargement() || chargementNav()) {
+          <div class="global-loading-bar"></div>
+      }
+
+      @if (chargementNav()) {
+        <div class="nav-loading-overlay">
+          <div class="nav-loading-card">
+            <div class="nav-spinner"></div>
+            <p class="nav-loading-text">Chargement des données...</p>
+          </div>
+        </div>
+      }
+
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>
